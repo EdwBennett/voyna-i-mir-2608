@@ -76,11 +76,19 @@ class SentencePairs:
           parse_page_list("1,3,5-8") → [1, 3, 5, 6, 7, 8]
           This will select all SentencePair objects whose .id is in {1,3,5,6,7,8}.
 
-        Calling `.filter()` more than once intersects the id sets.
+        Returns a new SentencePairs; the original is left unmodified.
+        Chaining `.filter()` calls intersects the id sets.
         """
         id_set = set(ids)
-        self._wanted_ids = id_set if self._wanted_ids is None else self._wanted_ids & id_set
-        return self
+        wanted = id_set if self._wanted_ids is None else self._wanted_ids & id_set
+        return self._spawn(wanted)
+
+    def _spawn(self, wanted_ids: set[int]) -> Self:
+        clone = type(self).__new__(type(self))
+        clone.path = self.path
+        clone._cache = self._cache
+        clone._wanted_ids = wanted_ids
+        return clone
 
     def __iter__(self) -> Iterator[SentencePair]:
         items = self._load_all()
