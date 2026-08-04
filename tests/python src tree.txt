@@ -1,0 +1,31 @@
+python src tree
+
+└───libroot
+    │   .gitignore
+    │   .python-version
+    │   pyproject.toml
+    │   README.md
+    │
+    └───src
+        └───libroot
+            │   py.typed
+            │   __init__.py
+            │
+            ├───pkg1
+            │   │   pyproject.toml
+            │   │   README.md
+            │   │
+            │   └───src
+            │       └───pkg1
+            │               modulea.py
+            │               __init__.py
+            │
+            └───pkg2
+                │   pyproject.toml
+                │   README.md
+                │
+                └───src
+                    └───pkg2
+                            moduleb.py
+                            __init__.py
+                            
