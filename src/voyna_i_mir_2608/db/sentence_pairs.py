@@ -14,7 +14,7 @@ Typical usage (as a library, no CLI):
 
     pairs = SentencePairs("50_russian_english_ipa.json")
     ids = parse_page_list("1,3,5-8")
-    for pair in pairs.filter(ids).to_list():
+    for pair in pairs.filter(ids):
         print(pair.ru, pair.en)
 
     SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).each(
@@ -27,7 +27,7 @@ No external dependencies beyond the standard library.
 
 import json
 import os
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 from typing import Any
 
@@ -57,7 +57,7 @@ class SentencePair:
 class SentencePairs:
     def __init__(self, path: str | os.PathLike[str]):
         self.path = path
-        self._filters: list[Callable[[list[SentencePair]], list[SentencePair]]] = []
+        self._wanted_ids: set[int] | None = None
 
     def _load_all(self) -> list[SentencePair]:
         with open(self.path, encoding="utf-8") as f:
@@ -72,26 +72,24 @@ class SentencePairs:
         Example:
           parse_page_list("1,3,5-8") → [1, 3, 5, 6, 7, 8]
           This will select all SentencePair objects whose .id is in {1,3,5,6,7,8}.
+
+        Calling `.filter()` more than once intersects the id sets.
         """
-        wanted_ids = set(pages)
-
-        def _filter(items: list[SentencePair]) -> list[SentencePair]:
-            return [item for item in items if item.id in wanted_ids]
-
-        self._filters.append(_filter)
+        ids = set(pages)
+        self._wanted_ids = ids if self._wanted_ids is None else self._wanted_ids & ids
         return self
 
-    def _filtered_items(self) -> list[SentencePair]:
+    def __iter__(self) -> Iterator[SentencePair]:
         items = self._load_all()
-        for f in self._filters:
-            items = f(items)
-        return items
+        if self._wanted_ids is not None:
+            items = [item for item in items if item.id in self._wanted_ids]
+        return iter(items)
 
     def each(self, fn: Callable[[SentencePair], Any]) -> None:
         """Run `fn` on each filtered SentencePair."""
-        for obj in self._filtered_items():
+        for obj in self:
             fn(obj)
 
     def to_list(self) -> list[SentencePair]:
         """Return filtered items as a list."""
-        return self._filtered_items()
+        return list(self)
