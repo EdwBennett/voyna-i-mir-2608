@@ -1,0 +1,9 @@
+After installing or syncing the project, you should be able to run:
+    uv run voyna_i_mir_2608
+    uv run python -m voyna_i_mir_2608
+The first form requires the script entry point; 
+    the second form only requires the package to be 
+    importable and to have __main__.py.
+For active development "uv sync" is the better choice:
+    it ensures your local environment perfectly 
+    matches your project's defined dependencies
