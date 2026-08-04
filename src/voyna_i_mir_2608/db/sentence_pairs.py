@@ -5,19 +5,19 @@ records shaped like:
 
     {"id": 1, "ru": "...", "ipa": "[...]", "en": "..."}
 
-and `parse_page_list`, which parses printer-style page/id specs like
+and `parse_id_list`, which parses printer-style id specs like
 "1,3,5-8" into an explicit list of integers for use with `.filter()`.
 
 Typical usage (as a library, no CLI):
 
-    from voyna_i_mir_2608.db.sentence_pairs import SentencePairs, parse_page_list
+    from voyna_i_mir_2608.db.sentence_pairs import SentencePairs, parse_id_list
 
     pairs = SentencePairs("50_russian_english_ipa.json")
-    ids = parse_page_list("1,3,5-8")
+    ids = parse_id_list("1,3,5-8")
     for pair in pairs.filter(ids):
         print(pair.ru, pair.en)
 
-    SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).each(
+    SentencePairs(JSON_PATH).filter(parse_id_list("1,3,5-8")).each(
         lambda pair: print(pair.ru, pair.ipa, pair.en)
     )
 
@@ -33,9 +33,9 @@ from dataclasses import dataclass
 from typing import Any, Self
 
 
-def parse_page_list(spec: str) -> list[int]:
+def parse_id_list(spec: str) -> list[int]:
     """
-    Parse a printer-style page list, e.g. "1,3,5-8" -> [1, 3, 5, 6, 7, 8].
+    Parse a printer-style id list, e.g. "1,3,5-8" -> [1, 3, 5, 6, 7, 8].
     """
     result: list[int] = []
     for part in spec.split(","):
@@ -72,9 +72,9 @@ class SentencePairs:
         """
         Filter by ID values (not positions).
 
-        The numbers from parse_page_list(...) are treated as SentencePair.id values.
+        The numbers from parse_id_list(...) are treated as SentencePair.id values.
         Example:
-          parse_page_list("1,3,5-8") → [1, 3, 5, 6, 7, 8]
+          parse_id_list("1,3,5-8") → [1, 3, 5, 6, 7, 8]
           This will select all SentencePair objects whose .id is in {1,3,5,6,7,8}.
 
         Returns a new SentencePairs; the original is left unmodified.
