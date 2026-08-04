@@ -4,7 +4,20 @@ import json
 from dataclasses import dataclass
 from typing import Callable, Any, List, Iterable, Dict
 
-from py_range_parse import parse_range
+
+def parse_page_list(spec: str) -> List[int]:
+    """
+    Parse a printer-style page list, e.g. "1,3,5-8" -> [1, 3, 5, 6, 7, 8].
+    """
+    result: List[int] = []
+    for part in spec.split(","):
+        if "-" in part:
+            start, end = part.split("-")
+            result.extend(range(int(start), int(end) + 1))
+        else:
+            result.append(int(part))
+    return result
+
 
 @dataclass
 class SentencePair:
@@ -27,9 +40,9 @@ class SentencePairs:
         """
         Filter by ID values (not positions).
 
-        The numbers from parse_range(...) are treated as SentencePair.id values.
+        The numbers from parse_page_list(...) are treated as SentencePair.id values.
         Example:
-          parse_range("1,3,5-8") → [1, 3, 5, 6, 7, 8]
+          parse_page_list("1,3,5-8") → [1, 3, 5, 6, 7, 8]
           This will select all SentencePair objects whose .id is in {1,3,5,6,7,8}.
         """
         wanted_ids = set(pages)

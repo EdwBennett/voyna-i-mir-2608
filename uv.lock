@@ -3,21 +3,6 @@ revision = 3
 requires-python = ">=3.14"
 
 [[package]]
-name = "py-range-parse"
-version = "1.0.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ed/f5/2c668a97348b5bfde9ea72b5106b706afae3177bf765c97a2f7b6887f312/py_range_parse-1.0.6.tar.gz", hash = "sha256:e8ded6123a8d422e6dfe880d29b0fdac930d927e3843cb272e49500a47010dda", size = 4927, upload-time = "2025-10-12T23:52:51.746Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fb/d0/1ed3da88320fccee2d09cdd98ef1519053658b21cf90441b1731c45714bd/py_range_parse-1.0.6-py3-none-any.whl", hash = "sha256:fe11726763a58b0fc376525440bc3bb07d39b4c1ee84809ad12b2f719f461ca5", size = 7579, upload-time = "2025-10-12T23:52:50.595Z" },
-]
-
-[[package]]
 name = "voyna-i-mir-2608"
 version = "0.1.0"
 source = { editable = "." }
-dependencies = [
-    { name = "py-range-parse" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "py-range-parse", specifier = ">=1.0.6" }]
