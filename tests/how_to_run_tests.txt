@@ -1,0 +1,4 @@
+uv run pytest
+uv run pytest -v                            # verbose, shows each test name
+uv run pytest tests/test_sentence_pairs.py  # just this file
+uv run pytest --cov=voyna_i_mir_2608        # with coverage report (pytest-cov is installed)
