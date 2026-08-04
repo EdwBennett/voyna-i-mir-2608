@@ -16,6 +16,11 @@ Typical usage (as a library, no CLI):
     ids = parse_page_list("1,3,5-8")
     for pair in pairs.filter(ids).to_list():
         print(pair.ru, pair.en)
+        
+    SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).execute(
+        lambda pair: print(pair.ru, pair.ipa, pair.en)
+    )
+
 
 No external dependencies beyond the standard library.
 """
