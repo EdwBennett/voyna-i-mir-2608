@@ -1,4 +1,24 @@
-# sentence_pairs.py
+"""Load and filter Russian/English sentence pairs with IPA transcriptions.
+
+Provides `SentencePairs`, a small chainable loader over a JSON file of
+records shaped like:
+
+    {"id": 1, "ru": "...", "ipa": "[...]", "en": "..."}
+
+and `parse_page_list`, which parses printer-style page/id specs like
+"1,3,5-8" into an explicit list of integers for use with `.filter()`.
+
+Typical usage (as a library, no CLI):
+
+    from voyna_i_mir_2608.db.sentence_pairs import SentencePairs, parse_page_list
+
+    pairs = SentencePairs("50_russian_english_ipa.json")
+    ids = parse_page_list("1,3,5-8")
+    for pair in pairs.filter(ids).to_list():
+        print(pair.ru, pair.en)
+
+No external dependencies beyond the standard library.
+"""
 
 import json
 from dataclasses import dataclass
