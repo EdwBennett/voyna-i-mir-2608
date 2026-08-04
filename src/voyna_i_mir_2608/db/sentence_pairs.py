@@ -25,6 +25,7 @@ Typical usage (as a library, no CLI):
 No external dependencies beyond the standard library.
 """
 
+import copy
 import json
 import os
 from collections.abc import Callable, Iterable, Iterator
@@ -84,9 +85,7 @@ class SentencePairs:
         return self._spawn(wanted)
 
     def _spawn(self, wanted_ids: set[int]) -> Self:
-        clone = type(self).__new__(type(self))
-        clone.path = self.path
-        clone._cache = self._cache
+        clone = copy.copy(self)
         clone._wanted_ids = wanted_ids
         return clone
 
