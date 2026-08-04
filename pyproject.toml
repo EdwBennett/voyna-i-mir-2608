@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "py-range-parse>=1.0.6",
+]
 
 [project.scripts]
 voyna-i-mir-2608 = "voyna_i_mir_2608.cli:main"
