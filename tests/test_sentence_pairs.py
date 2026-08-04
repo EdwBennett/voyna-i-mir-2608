@@ -34,17 +34,17 @@ def test_filter_excludes_non_matching_ids():
     assert subset[0].id == 1
 
 
-def test_execute_calls_fn_for_each_filtered_item():
+def test_each_calls_fn_for_each_filtered_item():
     seen = []
 
-    SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).execute(lambda s: seen.append(s.id))
+    SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).each(lambda s: seen.append(s.id))
 
     assert seen == [1, 3, 5, 6, 7, 8]
 
 
-def test_execute_usage_example_prints_each_matched_pair(capsys):
-    """Documents the filter().execute(print) usage pattern; not needed for coverage."""
-    SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).execute(
+def test_each_usage_example_prints_each_matched_pair(capsys):
+    """Documents the filter().each(print) usage pattern; not needed for coverage."""
+    SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).each(
         lambda pair: print(pair.ru, pair.ipa, pair.en)
     )
 

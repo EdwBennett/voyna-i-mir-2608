@@ -17,7 +17,7 @@ Typical usage (as a library, no CLI):
     for pair in pairs.filter(ids).to_list():
         print(pair.ru, pair.en)
         
-    SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).execute(
+    SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).each(
         lambda pair: print(pair.ru, pair.ipa, pair.en)
     )
 
@@ -84,7 +84,7 @@ class SentencePairs:
             items = f(items)
         return items
 
-    def execute(self, fn: Callable[[SentencePair], Any]) -> None:
+    def each(self, fn: Callable[[SentencePair], Any]) -> None:
         """Run `fn` on each filtered SentencePair."""
         for obj in self._filtered_items():
             fn(obj)
