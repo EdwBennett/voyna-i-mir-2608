@@ -42,6 +42,20 @@ def test_execute_calls_fn_for_each_filtered_item():
     assert seen == [1, 3, 5, 6, 7, 8]
 
 
+def test_execute_usage_example_prints_each_matched_pair(capsys):
+    """Documents the filter().execute(print) usage pattern; not needed for coverage."""
+    SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).execute(
+        lambda pair: print(pair.ru, pair.ipa, pair.en)
+    )
+
+    output_lines = capsys.readouterr().out.strip().splitlines()
+    expected_pairs = SentencePairs(JSON_PATH).filter(parse_page_list("1,3,5-8")).to_list()
+
+    assert len(output_lines) == len(expected_pairs)
+    for line, pair in zip(output_lines, expected_pairs):
+        assert line == f"{pair.ru} {pair.ipa} {pair.en}"
+
+
 def test_to_list_without_filter_returns_all_items():
     subset = SentencePairs(JSON_PATH).to_list()
 

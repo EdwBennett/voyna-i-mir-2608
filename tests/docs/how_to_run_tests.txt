@@ -2,3 +2,10 @@ uv run pytest
 uv run pytest -v                            # verbose, shows each test name
 uv run pytest tests/test_sentence_pairs.py  # just this file
 uv run pytest --cov=voyna_i_mir_2608        # with coverage report (pytest-cov is installed)
+
+uv run python -c "
+from voyna_i_mir_2608.db.sentence_pairs import SentencePairs, parse_page_list
+SentencePairs('src/voyna_i_mir_2608/db/50_russian_english_ipa.json').filter(parse_page_list('1,3,5-8')).execute(
+    lambda pair: print(pair.ru, pair.ipa, pair.en)
+)
+"
