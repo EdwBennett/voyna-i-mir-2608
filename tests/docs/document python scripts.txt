@@ -1,0 +1,110 @@
+The standard way to document Python `.py` scripts combines **module-level docstrings**, **function/method docstrings**, **inline comments**, and—very often—a **command-line help interface** (via `argparse` or similar). [realpython](https://realpython.com/documenting-python-code/)
+
+## Core conventions
+
+### 1. Module-level docstring (top of the file)
+Place a triple-quoted docstring as the very first statement in the file. It should:
+- Summarize what the script does
+- Explain typical usage (including CLI examples)
+- List key dependencies or setup notes if needed [realpython](https://realpython.com/documenting-python-code/)
+
+```python
+"""Backup script that archives a directory and uploads to S3.
+
+Usage:
+    python backup.py --source /data --bucket my-bucket
+
+Requires: boto3, and AWS credentials configured.
+"""
+```
+
+### 2. Function and class docstrings
+Use triple-double-quoted docstrings (`"""`) immediately after each `def` or `class`. Follow **PEP 257** and a consistent style (Google, reST/Sphinx, or NumPy style are common). [realpython](https://realpython.com/documenting-python-code/)
+
+At minimum include:
+- One-line summary
+- Optional extended description
+- Args, Returns, Raises (depending on your chosen style)
+
+Example (Google style):
+```python
+def compress(path: str, out: str) -> str:
+    """Compress a file using gzip.
+
+    Args:
+        path: Input file path.
+        out: Output .gz file path.
+
+    Returns:
+        The path to the compressed file.
+    """
+```
+
+### 3. Inline comments (`#`)
+Use `#` for:
+- Explaining *why* something is done (not just *what*)
+- Noting non-obvious implementation details
+- Temporary notes or caveats
+
+Keep comments concise and close to the code they describe; PEP 8 recommends ≤72 characters per comment line. [realpython](https://realpython.com/documenting-python-code/)
+
+### 4. Command-line help (`--help`)
+For scripts run from the terminal, implement argument parsing with `argparse` (or `click`/`typer`) so users can run:
+
+```bash
+python script.py --help
+```
+
+This effectively acts as a built-in man page, describing purpose, options, and examples—especially valuable for non-programmers. [softwareengineering.stackexchange](https://softwareengineering.stackexchange.com/questions/103375/how-should-i-document-a-python-script)
+
+## Project-level documentation (for anything beyond tiny scripts)
+
+If the script is part of a larger tool or shared with others, add:
+- **README.md**: overview, install steps, usage examples, troubleshooting [datacamp](https://www.datacamp.com/tutorial/documenting-python-code)
+- **requirements.txt** or **pyproject.toml**: dependencies [datacamp](https://www.datacamp.com/tutorial/documenting-python-code)
+- Optional: generated docs via **Sphinx**, **MkDocs**, or **pdoc** for larger codebases [realpython](https://realpython.com/documenting-python-code/)
+
+## Minimal template for a well-documented script
+
+```python
+"""Short summary of what this script does.
+
+Longer description if needed, including:
+- Typical usage examples
+- Required setup or environment variables
+- Notes on behavior or limitations
+"""
+
+import argparse
+from typing import Optional
+
+
+def process_data(path: str, verbose: bool = False) -> None:
+    """Process data from the given path.
+
+    Args:
+        path: Path to input file or directory.
+        verbose: If True, print progress messages.
+    """
+    ...
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Brief description of the script's purpose."
+    )
+    parser.add_argument("--input", required=True, help="Path to input data.")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output.")
+    args = parser.parse_args()
+
+    process_data(args.input, verbose=args.verbose)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+This pattern—module docstring, clear function docstrings, 
+targeted comments, and a helpful `--help`
+—is the de facto standard for documenting Python scripts. 
+[realpython](https://realpython.com/documenting-python-code/)
