@@ -1,0 +1,1 @@
+uv run pdoc src/voyna_i_mir_2608 -o docs/
