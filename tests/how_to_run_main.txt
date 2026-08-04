@@ -7,3 +7,5 @@ The first form requires the script entry point;
 For active development "uv sync" is the better choice:
     it ensures your local environment perfectly 
     matches your project's defined dependencies
+uv run python -m voyna_i_mir_2608.helper from 
+    the project root
