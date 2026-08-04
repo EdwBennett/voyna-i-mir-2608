@@ -29,7 +29,7 @@ import json
 import os
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Self
 
 
 def parse_page_list(spec: str) -> list[int]:
@@ -46,7 +46,7 @@ def parse_page_list(spec: str) -> list[int]:
     return result
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class SentencePair:
     id: int
     ru: str
@@ -58,13 +58,16 @@ class SentencePairs:
     def __init__(self, path: str | os.PathLike[str]):
         self.path = path
         self._wanted_ids: set[int] | None = None
+        self._cache: list[SentencePair] | None = None
 
     def _load_all(self) -> list[SentencePair]:
-        with open(self.path, encoding="utf-8") as f:
-            data = json.load(f)
-        return [SentencePair(**item) for item in data]
+        if self._cache is None:
+            with open(self.path, encoding="utf-8") as f:
+                data = json.load(f)
+            self._cache = [SentencePair(**item) for item in data]
+        return self._cache
 
-    def filter(self, pages: Iterable[int]) -> "SentencePairs":
+    def filter(self, ids: Iterable[int]) -> Self:
         """
         Filter by ID values (not positions).
 
@@ -75,8 +78,8 @@ class SentencePairs:
 
         Calling `.filter()` more than once intersects the id sets.
         """
-        ids = set(pages)
-        self._wanted_ids = ids if self._wanted_ids is None else self._wanted_ids & ids
+        id_set = set(ids)
+        self._wanted_ids = id_set if self._wanted_ids is None else self._wanted_ids & id_set
         return self
 
     def __iter__(self) -> Iterator[SentencePair]:
