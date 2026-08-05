@@ -19,6 +19,8 @@ from pathlib import Path
 HOME = Path.home()
 PIPER_BIN = HOME / ".local/bin/piper"
 SAMPLE_RATE = 22050
+BYTES_PER_SAMPLE = 2  # S16_LE mono
+LEAD_IN_SECONDS = 0.25  # silence prepended to give a suspended audio device time to wake
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +83,11 @@ def synthesize(*, lang: str, text: str) -> bytes:
     return result.stdout
 
 
+def silence(seconds: float) -> bytes:
+    """Raw S16_LE mono silence of the given duration."""
+    return b"\x00" * (int(SAMPLE_RATE * seconds) * BYTES_PER_SAMPLE)
+
+
 def say(*, lang: str, text: str) -> None:
     play_cmd = [
         "aplay",
@@ -96,7 +103,7 @@ def say(*, lang: str, text: str) -> None:
 
     try:
         audio = synthesize(lang=lang, text=text)
-        subprocess.run(play_cmd, input=audio, check=True)
+        subprocess.run(play_cmd, input=silence(LEAD_IN_SECONDS) + audio, check=True)
     except Exception as exc:  # noqa: BLE001 - CLI safety net, always report and continue rather than crash
         print(f"Error during playback: {exc}", file=sys.stderr)
 

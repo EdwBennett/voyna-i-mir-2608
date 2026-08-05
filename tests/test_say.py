@@ -143,6 +143,16 @@ def test_synthesize_invokes_piper_and_returns_stdout(monkeypatch):
     assert called_kwargs["check"] is True
 
 
+# -- silence -------------------------------------------------------------------
+
+
+def test_silence_is_zeroed_s16le_mono_of_requested_duration():
+    audio = say_module.silence(0.25)
+
+    # 0.25s at 22050 Hz, 16-bit mono: 5512 samples (truncated) * 2 bytes/sample.
+    assert audio == b"\x00" * 11024
+
+
 # -- say -------------------------------------------------------------------------
 
 
@@ -157,7 +167,7 @@ def test_say_plays_synthesized_audio(monkeypatch):
     called_kwargs = mock_run.call_args.kwargs
     assert called_cmd[0] == "aplay"
     assert str(say_module.SAMPLE_RATE) in called_cmd
-    assert called_kwargs["input"] == b"pcm-bytes"
+    assert called_kwargs["input"] == say_module.silence(say_module.LEAD_IN_SECONDS) + b"pcm-bytes"
     assert called_kwargs["check"] is True
 
 
