@@ -1,9 +1,10 @@
 
-from typing import Callable, Optional
+from collections.abc import Callable
+
 
 def play_ru(id: int) -> Callable[[], None]:
 
     def ru_fn():
-        print (f"id = {id}")
+        print (f"ru id = {id}")
 
     return ru_fn

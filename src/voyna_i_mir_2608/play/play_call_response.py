@@ -1,10 +1,9 @@
-"""
+"""Executes a call function followed by a response function."""
 
-"""
+from collections.abc import Callable
 
-from typing import Callable, Optional
 
-def play(fn_call: Optional[Callable[[], None]], fn_response: Optional[Callable[[], None]]) -> None:
+def play(fn_call: Callable[[], None] | None, fn_response: Callable[[], None] | None) -> None:
     """Executes a function call followed by its response function, allowing either to be None."""
     if fn_call is not None:
         fn_call()
