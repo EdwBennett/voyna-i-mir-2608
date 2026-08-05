@@ -188,6 +188,13 @@ def test_cli_warns_and_exits_zero_on_empty_stdin():
     assert "Warning: Received empty text input" in result.stderr
 
 
+def test_cli_warns_and_exits_zero_on_whitespace_only_arg():
+    result = run_cli(["-l", "en", "   "])
+
+    assert result.returncode == 0
+    assert "Warning: Received empty text input" in result.stderr
+
+
 def test_cli_errors_when_no_text_and_stdin_is_a_tty():
     master_fd, slave_fd = pty.openpty()
     try:

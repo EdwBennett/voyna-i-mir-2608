@@ -114,12 +114,13 @@ if __name__ == "__main__":
     if args.text is not None:
         text_to_speak = args.text
     elif not sys.stdin.isatty():
-        # Read from pipe/redirected input and strip trailing whitespace/newlines
-        text_to_speak = sys.stdin.read().strip()
+        # Read from pipe/redirected input
+        text_to_speak = sys.stdin.read()
     else:
         # User ran the script with no arguments and no pipe
         parser.error("the following arguments are required: text (or provide text via stdin)")
 
+    text_to_speak = text_to_speak.strip()
     if not text_to_speak:
         print("Warning: Received empty text input. Nothing to speak.", file=sys.stderr)
         sys.exit(0)
