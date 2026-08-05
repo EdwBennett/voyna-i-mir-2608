@@ -8,14 +8,14 @@ from voyna_i_mir_2608.play.play_wait import play_wait
 from voyna_i_mir_2608.play.play_ru import play_ru
 
 
-def play_en_ru(id: int) -> None:
+def play_en_ru(id: int, delay: int) -> None:
     fn_call: Callable[[], None] = play_en(id)
-    fn_wait: Callable[[], None] = play_wait(2)
+    fn_wait: Callable[[], None] = play_wait(delay)
     fn_response: Callable[[], None] = play_ru(id)
     play(fn_call, fn_wait, fn_response)
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        raise SystemExit("Usage: uv run play_en_ru.py <id>")
-    play_en_ru(int(sys.argv[1]))
+    if len(sys.argv) != 3:
+        raise SystemExit("Usage: uv run play_en_ru.py <id> <delay>")
+    play_en_ru(int(sys.argv[1]), delay=int(sys.argv[2]))

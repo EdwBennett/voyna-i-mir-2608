@@ -23,6 +23,7 @@ from pathlib import Path
 HOME = Path.home()
 PIPER_BIN = HOME / ".local/bin/piper"
 SAMPLE_RATE = 22050
+LEAD_IN_SECONDS = 0.3
 LANGUAGES: dict[str, VoiceSpec] = {}
 
 
@@ -71,11 +72,11 @@ def synthesize(*, lang: str, text: str) -> bytes:
     """Render text to raw S16_LE mono PCM audio at SAMPLE_RATE, without playing it."""
     spec = validate_paths(lang)
     piper_cmd = [
-        PIPER_BIN,
+        str(PIPER_BIN),
         "--model",
-        spec.model,
+        str(spec.model),
         "--config",
-        spec.model_config,
+        str(spec.model_config),
         "--output_raw",
     ]
     result = subprocess.run(
@@ -85,6 +86,12 @@ def synthesize(*, lang: str, text: str) -> bytes:
         check=True,
     )
     return result.stdout
+
+
+def silence(duration_seconds: float) -> bytes:
+    """Return zeroed S16_LE mono PCM audio of the requested duration at SAMPLE_RATE."""
+    num_samples = int(SAMPLE_RATE * duration_seconds)
+    return b"\x00" * (num_samples * 2)
 
 
 def say(*, lang: str, text: str) -> None:
@@ -102,7 +109,7 @@ def say(*, lang: str, text: str) -> None:
 
     try:
         audio = synthesize(lang=lang, text=text)
-        subprocess.run(play_cmd, input=audio, check=True)
+        subprocess.run(play_cmd, input=silence(LEAD_IN_SECONDS) + audio, check=True)
     except Exception as exc:  # noqa: BLE001 - CLI safety net, always report and continue rather than crash
         print(f"Error during playback: {exc}", file=sys.stderr)
 
@@ -116,7 +123,7 @@ if __name__ == "__main__":
 
     # Determine text source
     if args.text is not None:
-        text_to_speak = args.text
+        text_to_speak = args.text.strip()
     elif not sys.stdin.isatty():
         # Read from pipe/redirected input and strip trailing whitespace/newlines
         text_to_speak = sys.stdin.read().strip()

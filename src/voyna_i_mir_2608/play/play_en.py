@@ -15,7 +15,7 @@ def play_en(id: int) -> Callable[[], None]:
     def en_fn():
         pairs = SentencePairs(JSON_PATH).filter([id]).to_list()
         pair = pairs[0]
-        print (f"{pair.en}")
+        print (f"\n{pair.en}")
         say(lang = "en", text=pair.en)
 
     return en_fn

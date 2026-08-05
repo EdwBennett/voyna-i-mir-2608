@@ -18,7 +18,7 @@ def play_ru(id: int) -> Callable[[], None]:
         say(lang = "ru", text=pair.ru)
         print (f"{pair.ru}")
         print (f"{pair.ipa}")
-        print (f"{pair.words}")
+        print (f"{pair.words}\n")
 
 
     return ru_fn
