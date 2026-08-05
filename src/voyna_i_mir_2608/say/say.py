@@ -8,9 +8,13 @@ Setup:
 
 Test:
     uv run test_say.py
+    uv run say.py -l ru "Война и миръ Графъ Л. Н. Толстой"
 """
 
+from __future__ import annotations
+
 import argparse
+import dataclasses
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -19,8 +23,7 @@ from pathlib import Path
 HOME = Path.home()
 PIPER_BIN = HOME / ".local/bin/piper"
 SAMPLE_RATE = 22050
-BYTES_PER_SAMPLE = 2  # S16_LE mono
-LEAD_IN_SECONDS = 0.25  # silence prepended to give a suspended audio device time to wake
+LANGUAGES: dict[str, VoiceSpec] = {}
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,16 +32,18 @@ class VoiceSpec:
     model_config: Path
 
 
-LANGUAGES: dict[str, VoiceSpec] = {
-    "en": VoiceSpec(
-        model=HOME / ".local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx",
-        model_config=HOME / ".local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx.json",
-    ),
-    "ru": VoiceSpec(
-        model=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx",
-        model_config=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx.json",
-    ),
-}
+LANGUAGES.update(
+    {
+        "en": VoiceSpec(
+            model=HOME / ".local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx",
+            model_config=HOME / ".local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx.json",
+        ),
+        "ru": VoiceSpec(
+            model=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx",
+            model_config=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx.json",
+        ),
+    }
+)
 
 
 def get_voice_spec(lang: str) -> VoiceSpec:
@@ -50,16 +55,15 @@ def get_voice_spec(lang: str) -> VoiceSpec:
 
 def validate_paths(lang: str) -> VoiceSpec:
     spec = get_voice_spec(lang)
-
+    
     if not PIPER_BIN.exists():
         raise FileNotFoundError(f"Piper binary not found at {PIPER_BIN}")
-
-    if not spec.model.exists():
-        raise FileNotFoundError(f"Model not found at {spec.model}")
-
-    if not spec.model_config.exists():
-        raise FileNotFoundError(f"Model config not found at {spec.model_config}")
-
+        
+    for field_name, path in dataclasses.asdict(spec).items():
+        if not path.exists():
+            display_name = field_name.replace("_", " ").capitalize()
+            raise FileNotFoundError(f"{display_name} not found at {path}")
+            
     return spec
 
 
@@ -67,11 +71,11 @@ def synthesize(*, lang: str, text: str) -> bytes:
     """Render text to raw S16_LE mono PCM audio at SAMPLE_RATE, without playing it."""
     spec = validate_paths(lang)
     piper_cmd = [
-        str(PIPER_BIN),
+        PIPER_BIN,
         "--model",
-        str(spec.model),
+        spec.model,
         "--config",
-        str(spec.model_config),
+        spec.model_config,
         "--output_raw",
     ]
     result = subprocess.run(
@@ -81,11 +85,6 @@ def synthesize(*, lang: str, text: str) -> bytes:
         check=True,
     )
     return result.stdout
-
-
-def silence(seconds: float) -> bytes:
-    """Raw S16_LE mono silence of the given duration."""
-    return b"\x00" * (int(SAMPLE_RATE * seconds) * BYTES_PER_SAMPLE)
 
 
 def say(*, lang: str, text: str) -> None:
@@ -103,7 +102,7 @@ def say(*, lang: str, text: str) -> None:
 
     try:
         audio = synthesize(lang=lang, text=text)
-        subprocess.run(play_cmd, input=silence(LEAD_IN_SECONDS) + audio, check=True)
+        subprocess.run(play_cmd, input=audio, check=True)
     except Exception as exc:  # noqa: BLE001 - CLI safety net, always report and continue rather than crash
         print(f"Error during playback: {exc}", file=sys.stderr)
 
@@ -119,13 +118,12 @@ if __name__ == "__main__":
     if args.text is not None:
         text_to_speak = args.text
     elif not sys.stdin.isatty():
-        # Read from pipe/redirected input
-        text_to_speak = sys.stdin.read()
+        # Read from pipe/redirected input and strip trailing whitespace/newlines
+        text_to_speak = sys.stdin.read().strip()
     else:
         # User ran the script with no arguments and no pipe
         parser.error("the following arguments are required: text (or provide text via stdin)")
 
-    text_to_speak = text_to_speak.strip()
     if not text_to_speak:
         print("Warning: Received empty text input. Nothing to speak.", file=sys.stderr)
         sys.exit(0)
