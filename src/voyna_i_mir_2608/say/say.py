@@ -23,7 +23,7 @@ from pathlib import Path
 HOME = Path.home()
 PIPER_BIN = HOME / ".local/bin/piper"
 SAMPLE_RATE = 22050
-LEAD_IN_SECONDS = 0.3
+LEAD_IN_SECONDS = 0.5
 LANGUAGES: dict[str, VoiceSpec] = {}
 
 
@@ -97,6 +97,7 @@ def silence(duration_seconds: float) -> bytes:
 def say(*, lang: str, text: str) -> None:
     play_cmd = [
         "aplay",
+        "-q",
         "-c",
         "1",
         "-r",
