@@ -13,7 +13,6 @@ Test:
 from __future__ import annotations
 
 import argparse
-import dataclasses
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -22,7 +21,6 @@ from pathlib import Path
 HOME = Path.home()
 PIPER_BIN = HOME / ".local/bin/piper"
 SAMPLE_RATE = 22050
-LANGUAGES: dict[str, VoiceSpec] = {}
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,18 +29,16 @@ class VoiceSpec:
     model_config: Path
 
 
-LANGUAGES.update(
-    {
-        "en": VoiceSpec(
-            model=HOME / ".local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx",
-            model_config=HOME / ".local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx.json",
-        ),
-        "ru": VoiceSpec(
-            model=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx",
-            model_config=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx.json",
-        ),
-    }
-)
+LANGUAGES: dict[str, VoiceSpec] = {
+    "en": VoiceSpec(
+        model=HOME / ".local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx",
+        model_config=HOME / ".local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx.json",
+    ),
+    "ru": VoiceSpec(
+        model=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx",
+        model_config=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx.json",
+    ),
+}
 
 
 def get_voice_spec(lang: str) -> VoiceSpec:
@@ -54,15 +50,16 @@ def get_voice_spec(lang: str) -> VoiceSpec:
 
 def validate_paths(lang: str) -> VoiceSpec:
     spec = get_voice_spec(lang)
-    
+
     if not PIPER_BIN.exists():
         raise FileNotFoundError(f"Piper binary not found at {PIPER_BIN}")
-        
-    for field_name, path in dataclasses.asdict(spec).items():
-        if not path.exists():
-            display_name = field_name.replace("_", " ").capitalize()
-            raise FileNotFoundError(f"{display_name} not found at {path}")
-            
+
+    if not spec.model.exists():
+        raise FileNotFoundError(f"Model not found at {spec.model}")
+
+    if not spec.model_config.exists():
+        raise FileNotFoundError(f"Model config not found at {spec.model_config}")
+
     return spec
 
 
