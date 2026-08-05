@@ -8,7 +8,7 @@ from voyna_i_mir_2608.db.sentence_pairs import (
     parse_id_list,
 )
 
-JSON_PATH = Path(__file__).resolve().parent.parent / "src" / "voyna_i_mir_2608" / "db" / "50_russian_english_ipa.json"
+JSON_PATH = Path(__file__).resolve().parent.parent / "src" / "voyna_i_mir_2608" / "db" / "50_russian_english_ipa_words.json"
 
 
 @pytest.mark.parametrize(
