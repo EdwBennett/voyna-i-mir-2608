@@ -6,17 +6,16 @@ from voyna_i_mir_2608.db.sentence_pairs import (
     SentencePairs,
     parse_id_list,
 )
+from voyna_i_mir_2608.say.say import say
 
-JSON_PATH = Path(__file__).resolve().parent.parent / "src" / "voyna_i_mir_2608" / "db" / "50_russian_english_ipa_words.json"
+JSON_PATH = Path(__file__).resolve().parent.parent / "db" / "50_russian_english_ipa_words.json"
 
 def play_en(id: int) -> Callable[[], None]:
 
     def en_fn():
-        pairs = SentencePairs(JSON_PATH).filter([1]).to_list()
-        pair = pairs[1]
-        en_text: str = "english text" # pair.en
-        words_text: str = "words text" # pair.words
-        print (f"{pair.en} for id = {id}")
-        print (f"{words_text} for id = {id}")
+        pairs = SentencePairs(JSON_PATH).filter([id]).to_list()
+        pair = pairs[0]
+        print (f"{pair.en}")
+        say(lang = "en", text=pair.en)
 
     return en_fn
