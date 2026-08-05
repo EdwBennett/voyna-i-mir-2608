@@ -1,0 +1,15 @@
+  mkdir -p ~/.local/share/piper-voices/en/en_US/amy/medium
+  mkdir -p ~/.local/share/piper-voices/ru/ru_RU/irina/medium
+
+  base=https://huggingface.co/rhasspy/piper-voices/resolve/main
+
+  curl -L "$base/en/en_US/amy/medium/en_US-amy-medium.onnx" \
+    -o ~/.local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx
+  curl -L "$base/en/en_US/amy/medium/en_US-amy-medium.onnx.json" \
+    -o ~/.local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx.json
+
+  curl -L "$base/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx" \
+    -o ~/.local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx
+  curl -L "$base/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx.json" \
+    -o ~/.local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx.json
+    
