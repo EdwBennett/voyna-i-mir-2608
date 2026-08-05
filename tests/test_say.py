@@ -36,6 +36,7 @@ def run_cli(args: list[str], *, input_text: str | None = None) -> subprocess.Com
         input=input_text,
         text=True,
         capture_output=True,
+        check=False,
     )
 
 
@@ -131,14 +132,14 @@ def test_synthesize_invokes_piper_and_returns_stdout(monkeypatch):
     assert result == b"raw-audio-bytes"
     (called_cmd,), called_kwargs = mock_run.call_args
     assert called_cmd == [
-        Path("/fake/piper"),
+        "/fake/piper",
         "--model",
-        spec.model,
+        str(spec.model),
         "--config",
-        spec.model_config,
+        str(spec.model_config),
         "--output_raw",
     ]
-    assert called_kwargs["input"] == "hello world".encode("utf-8")
+    assert called_kwargs["input"] == b"hello world"
     assert called_kwargs["stdout"] == subprocess.PIPE
     assert called_kwargs["check"] is True
 
@@ -203,6 +204,7 @@ def test_cli_errors_when_no_text_and_stdin_is_a_tty():
             stdin=slave_fd,
             text=True,
             capture_output=True,
+            check=False,
         )
     finally:
         os.close(master_fd)

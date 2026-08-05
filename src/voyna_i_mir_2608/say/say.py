@@ -10,8 +10,6 @@ Test:
     uv run test_say.py
 """
 
-from __future__ import annotations
-
 import argparse
 import subprocess
 import sys
@@ -67,11 +65,11 @@ def synthesize(*, lang: str, text: str) -> bytes:
     """Render text to raw S16_LE mono PCM audio at SAMPLE_RATE, without playing it."""
     spec = validate_paths(lang)
     piper_cmd = [
-        PIPER_BIN,
+        str(PIPER_BIN),
         "--model",
-        spec.model,
+        str(spec.model),
         "--config",
-        spec.model_config,
+        str(spec.model_config),
         "--output_raw",
     ]
     result = subprocess.run(
