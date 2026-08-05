@@ -21,6 +21,12 @@ Typical usage (as a library, no CLI):
         lambda pair: print(pair.ru, pair.ipa, pair.en)
     )
 
+    uv run python -c "
+    from voyna_i_mir_2608.db.sentence_pairs import SentencePairs, parse_id_list
+    SentencePairs('src/voyna_i_mir_2608/db/50_russian_english_ipa.json').filter(parse_id_list('1,3,5-8')).each(
+        lambda pair: print(f'{pair.id}\\n{pair.ru}\\n\\n')
+    )
+"
 
 No external dependencies beyond the standard library.
 """
