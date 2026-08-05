@@ -9,8 +9,6 @@ integration test calls the real piper binary, if installed, to confirm
 synthesis actually works end to end without playing the result.
 """
 
-from __future__ import annotations
-
 import os
 import pty
 import subprocess
@@ -130,7 +128,8 @@ def test_synthesize_invokes_piper_and_returns_stdout(monkeypatch):
     result = say_module.synthesize(lang="en", text="hello world")
 
     assert result == b"raw-audio-bytes"
-    (called_cmd,), called_kwargs = mock_run.call_args
+    called_cmd = mock_run.call_args.args[0]
+    called_kwargs = mock_run.call_args.kwargs
     assert called_cmd == [
         "/fake/piper",
         "--model",
@@ -154,7 +153,8 @@ def test_say_plays_synthesized_audio(monkeypatch):
 
     say_module.say(lang="en", text="hi")
 
-    (called_cmd,), called_kwargs = mock_run.call_args
+    called_cmd = mock_run.call_args.args[0]
+    called_kwargs = mock_run.call_args.kwargs
     assert called_cmd[0] == "aplay"
     assert str(say_module.SAMPLE_RATE) in called_cmd
     assert called_kwargs["input"] == b"pcm-bytes"
