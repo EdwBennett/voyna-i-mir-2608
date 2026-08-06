@@ -2,7 +2,7 @@
 
 Also runnable as a script:
 
-    python -m voyna_i_mir_2608.play.play_en_ru <id> <delay> [clause] [-o OUTPUT | -t | -i]
+    python -m voyna_i_mir_2608.play.play_en_ru <id> <delay> [clause] [--ru-voice {irina,denis}] [-o OUTPUT | -t | -i]
 """
 
 import subprocess
@@ -23,15 +23,17 @@ def play_en_ru(
     output: Optional[str] = None,
     text_only: bool = False,
     interactive: bool = False,
+    ru_voice: Optional[str] = None,
 ) -> None:
     """Play, print, or render (to mp3) the English/Russian pairs matching `id_`.
 
     `id_` is a printer-style spec (e.g. "1,3,5-8") parsed by `parse_id_list`.
     `output`, `text_only`, and `interactive` are mutually exclusive; with none
     set, each pair is spoken aloud (English, then a `delay`-second pause, then
-    Russian). With `interactive` set, each pause instead waits for the space
-    bar; after Russian, pressing "r" replays the Russian audio (as many times
-    as desired) before the space bar advances to the next pair.
+    Russian, in `ru_voice` if given). With `interactive` set, each pause
+    instead waits for the space bar; after Russian, pressing "r" replays the
+    Russian audio (as many times as desired) before the space bar advances to
+    the next pair.
     """
     if sum((output is not None, text_only, interactive)) > 1:
         raise ValueError("output, text_only, and interactive are mutually exclusive")
@@ -39,7 +41,7 @@ def play_en_ru(
     ids = parse_id_list(id_)
 
     if output is not None:
-        _render_to_mp3(ids, delay, clause, output)
+        _render_to_mp3(ids, delay, clause, output, ru_voice)
         return
 
     if text_only:
@@ -49,7 +51,7 @@ def play_en_ru(
 
     for pair_id in ids:
         fn_call: Callable[[], None] = play_en(pair_id, clause)
-        fn_response: Callable[[], None] = play_ru(pair_id, clause)
+        fn_response: Callable[[], None] = play_ru(pair_id, clause, ru_voice)
         if interactive:
             fn_wait_before: Callable[[], None] = play_wait_key()
             fn_wait_after: Callable[[], None] = play_wait_key(repeat_key="r", repeat_fn=fn_response)
@@ -59,7 +61,9 @@ def play_en_ru(
         play(fn_call, fn_wait_before, fn_response, fn_wait_after)
 
 
-def _render_to_mp3(ids: list[int], delay: int, clause: Optional[int], output: str) -> None:
+def _render_to_mp3(
+    ids: list[int], delay: int, clause: Optional[int], output: str, ru_voice: Optional[str] = None
+) -> None:
     """Synthesize every id's en/ru pair (with delay silence) and encode straight to mp3.
 
     Skips live playback entirely, so this only takes as long as synthesis and
@@ -70,7 +74,7 @@ def _render_to_mp3(ids: list[int], delay: int, clause: Optional[int], output: st
 
     delay_silence = silence(delay)
     audio = b"".join(
-        render_en(id_, clause) + delay_silence + render_ru(id_, clause) + delay_silence
+        render_en(id_, clause) + delay_silence + render_ru(id_, clause, ru_voice) + delay_silence
         for id_ in ids
     )
 
@@ -99,6 +103,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "clause", type=int, nargs="?", default=None, help="Optional clause index within the sentence"
     )
+    parser.add_argument(
+        "--ru-voice",
+        default="denis",
+        choices=["irina", "denis"],
+        help="Russian voice to use (default: denis)",
+    )
     output_group = parser.add_mutually_exclusive_group()
     output_group.add_argument(
         "-o", "--output",
@@ -125,4 +135,5 @@ if __name__ == "__main__":
         output=args.output,
         text_only=args.text_only,
         interactive=args.interactive,
+        ru_voice=args.ru_voice,
     )

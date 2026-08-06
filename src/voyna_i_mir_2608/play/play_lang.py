@@ -70,14 +70,14 @@ _PRINT: dict[Lang, Callable[[SentencePair, Optional[int], str], None]] = {
 }
 
 
-def _play_fn(lang: Lang, id_: int, clause: Optional[int]) -> Callable[[], None]:
-    """Return a function that prints and speaks the `lang` utterance for `id_`/`clause`."""
+def _play_fn(lang: Lang, id_: int, clause: Optional[int], voice: Optional[str] = None) -> Callable[[], None]:
+    """Return a function that prints and speaks the `lang` (optionally `voice`) utterance for `id_`/`clause`."""
 
     def fn():
         pair = _load_pair(id_)
         text = _SELECT_TEXT[lang](pair, clause)
         _PRINT[lang](pair, clause, text)
-        say(lang=lang, text=text)
+        say(lang=lang, text=text, voice=voice)
 
     return fn
 
@@ -93,11 +93,11 @@ def _print_fn(lang: Lang, id_: int, clause: Optional[int]) -> Callable[[], None]
     return fn
 
 
-def _render(lang: Lang, id_: int, clause: Optional[int]) -> bytes:
-    """Synthesize the `lang` utterance for `id_`/`clause` without playing it."""
+def _render(lang: Lang, id_: int, clause: Optional[int], voice: Optional[str] = None) -> bytes:
+    """Synthesize the `lang` (optionally `voice`) utterance for `id_`/`clause` without playing it."""
     pair = _load_pair(id_)
     text = _SELECT_TEXT[lang](pair, clause)
-    return silence(LEAD_IN_SECONDS) + synthesize(lang=lang, text=text)
+    return silence(LEAD_IN_SECONDS) + synthesize(lang=lang, text=text, voice=voice)
 
 
 def play_en(id_: int, clause: Optional[int] = None) -> Callable[[], None]:
@@ -105,9 +105,9 @@ def play_en(id_: int, clause: Optional[int] = None) -> Callable[[], None]:
     return _play_fn("en", id_, clause)
 
 
-def play_ru(id_: int, clause: Optional[int] = None) -> Callable[[], None]:
-    """Return a function that prints and speaks the Russian utterance for `id_`/`clause`."""
-    return _play_fn("ru", id_, clause)
+def play_ru(id_: int, clause: Optional[int] = None, voice: Optional[str] = None) -> Callable[[], None]:
+    """Return a function that prints and speaks the Russian utterance for `id_`/`clause` in the given `voice`."""
+    return _play_fn("ru", id_, clause, voice)
 
 
 def print_en(id_: int, clause: Optional[int] = None) -> Callable[[], None]:
@@ -125,6 +125,6 @@ def render_en(id_: int, clause: Optional[int] = None) -> bytes:
     return _render("en", id_, clause)
 
 
-def render_ru(id_: int, clause: Optional[int] = None) -> bytes:
-    """Synthesize the Russian utterance for `id_`/`clause` without playing it."""
-    return _render("ru", id_, clause)
+def render_ru(id_: int, clause: Optional[int] = None, voice: Optional[str] = None) -> bytes:
+    """Synthesize the Russian utterance for `id_`/`clause` in the given `voice` without playing it."""
+    return _render("ru", id_, clause, voice)

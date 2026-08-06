@@ -67,7 +67,7 @@ def test_play_en_ru_text_only_prints_without_speaking_or_waiting(monkeypatch, ca
 
 def test_play_en_ru_speaks_english_then_waits_then_russian(monkeypatch):
     calls = []
-    mock_say = MagicMock(side_effect=lambda *, lang, text: calls.append((lang, text)))
+    mock_say = MagicMock(side_effect=lambda *, lang, text, voice: calls.append((lang, text)))
     mock_sleep = MagicMock(side_effect=lambda seconds: calls.append(("wait", seconds)))
     monkeypatch.setattr(play_lang_module, "say", mock_say)
     monkeypatch.setattr(play_wait_module.time, "sleep", mock_sleep)
@@ -78,9 +78,20 @@ def test_play_en_ru_speaks_english_then_waits_then_russian(monkeypatch):
     assert calls == [("en", PAIR.en), ("wait", 3), ("ru", PAIR.ru), ("wait", 3)]
 
 
+def test_play_en_ru_passes_ru_voice_through_to_say(monkeypatch):
+    calls = []
+    mock_say = MagicMock(side_effect=lambda *, lang, text, voice: calls.append((lang, voice)))
+    monkeypatch.setattr(play_lang_module, "say", mock_say)
+    monkeypatch.setattr(play_wait_module.time, "sleep", lambda seconds: None)
+
+    play_en_ru_module.play_en_ru("1", delay=0, ru_voice="irina")
+
+    assert calls == [("en", None), ("ru", "irina")]
+
+
 def test_play_en_ru_interactive_waits_for_key_instead_of_sleeping(monkeypatch):
     calls = []
-    mock_say = MagicMock(side_effect=lambda *, lang, text: calls.append((lang, text)))
+    mock_say = MagicMock(side_effect=lambda *, lang, text, voice: calls.append((lang, text)))
     mock_sleep = MagicMock()
     mock_wait_key = MagicMock(return_value=lambda: calls.append(("key-wait",)))
     monkeypatch.setattr(play_lang_module, "say", mock_say)
@@ -96,7 +107,7 @@ def test_play_en_ru_interactive_waits_for_key_instead_of_sleeping(monkeypatch):
 
 def test_play_en_ru_interactive_r_replays_russian_after_response(monkeypatch):
     calls = []
-    mock_say = MagicMock(side_effect=lambda *, lang, text: calls.append((lang, text)))
+    mock_say = MagicMock(side_effect=lambda *, lang, text, voice: calls.append((lang, text)))
     monkeypatch.setattr(play_lang_module, "say", mock_say)
     monkeypatch.setattr(play_wait_module.sys.stdin, "fileno", MagicMock(return_value=0))
     monkeypatch.setattr(play_wait_module.termios, "tcgetattr", MagicMock(return_value="old-settings"))
@@ -115,7 +126,7 @@ def test_play_en_ru_interactive_r_replays_russian_after_response(monkeypatch):
 
 def test_play_en_ru_processes_each_id_in_the_spec(monkeypatch):
     seen_ids = []
-    monkeypatch.setattr(play_lang_module, "say", lambda *, lang, text: None)
+    monkeypatch.setattr(play_lang_module, "say", lambda *, lang, text, voice: None)
     monkeypatch.setattr(play_wait_module.time, "sleep", lambda seconds: None)
     monkeypatch.setattr(
         play_en_ru_module,
@@ -125,7 +136,7 @@ def test_play_en_ru_processes_each_id_in_the_spec(monkeypatch):
     monkeypatch.setattr(
         play_en_ru_module,
         "play_ru",
-        lambda id_, clause=None: (lambda: seen_ids.append(("ru", id_))),
+        lambda id_, clause=None, voice=None: (lambda: seen_ids.append(("ru", id_))),
     )
 
     play_en_ru_module.play_en_ru("1,3", delay=0)
@@ -140,7 +151,7 @@ def test_play_en_ru_renders_to_mp3_without_live_playback(monkeypatch, tmp_path):
     mock_say = MagicMock()
     monkeypatch.setattr(play_lang_module, "say", mock_say)
     monkeypatch.setattr(play_en_ru_module, "render_en", lambda id_, clause: b"EN")
-    monkeypatch.setattr(play_en_ru_module, "render_ru", lambda id_, clause: b"RU")
+    monkeypatch.setattr(play_en_ru_module, "render_ru", lambda id_, clause, voice=None: b"RU")
     mock_run = MagicMock()
     monkeypatch.setattr(play_en_ru_module.subprocess, "run", mock_run)
 
@@ -162,7 +173,9 @@ def test_render_to_mp3_rejects_non_mp3_output():
 
 def test_render_to_mp3_builds_audio_and_invokes_ffmpeg(monkeypatch):
     monkeypatch.setattr(play_en_ru_module, "render_en", lambda id_, clause: b"EN" + str(id_).encode())
-    monkeypatch.setattr(play_en_ru_module, "render_ru", lambda id_, clause: b"RU" + str(id_).encode())
+    monkeypatch.setattr(
+        play_en_ru_module, "render_ru", lambda id_, clause, voice=None: b"RU" + str(id_).encode()
+    )
     mock_run = MagicMock()
     monkeypatch.setattr(play_en_ru_module.subprocess, "run", mock_run)
 
@@ -177,6 +190,21 @@ def test_render_to_mp3_builds_audio_and_invokes_ffmpeg(monkeypatch):
     assert called_cmd[0] == "ffmpeg"
     assert called_cmd[-1] == "out.mp3"
     assert mock_run.call_args.kwargs["check"] is True
+
+
+def test_render_to_mp3_passes_ru_voice_through_to_render_ru(monkeypatch):
+    calls = []
+    monkeypatch.setattr(play_en_ru_module, "render_en", lambda id_, clause: b"EN")
+    monkeypatch.setattr(
+        play_en_ru_module,
+        "render_ru",
+        lambda id_, clause, voice=None: calls.append(voice) or b"RU",
+    )
+    monkeypatch.setattr(play_en_ru_module.subprocess, "run", MagicMock())
+
+    play_en_ru_module._render_to_mp3([1], delay=1, clause=None, output="out.mp3", ru_voice="irina")
+
+    assert calls == ["irina"]
 
 
 # -- CLI (argparse wiring) ------------------------------------------------------------

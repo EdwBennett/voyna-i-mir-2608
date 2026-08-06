@@ -23,8 +23,11 @@ from voyna_i_mir_2608.say.say import VoiceSpec
 
 SAY_PY = Path(__file__).resolve().parent.parent / "src" / "voyna_i_mir_2608" / "say" / "say.py"
 
+_ALL_SPECS = list(say_module.LANGUAGES.values()) + [
+    spec for voices in say_module.VOICES.values() for spec in voices.values()
+]
 PIPER_AVAILABLE = say_module.PIPER_BIN.exists() and all(
-    path.exists() for spec in say_module.LANGUAGES.values() for path in (spec.model, spec.model_config)
+    path.exists() for spec in _ALL_SPECS for path in (spec.model, spec.model_config)
 )
 
 
@@ -51,6 +54,22 @@ def test_get_voice_spec_returns_known_language(lang):
 def test_get_voice_spec_unsupported_language_raises():
     with pytest.raises(ValueError, match="Unsupported language: fr"):
         say_module.get_voice_spec("fr")
+
+
+@pytest.mark.parametrize("voice", ["irina", "denis"])
+def test_get_voice_spec_returns_named_ru_voice(voice):
+    spec = say_module.get_voice_spec("ru", voice)
+
+    assert spec == say_module.VOICES["ru"][voice]
+
+
+def test_get_voice_spec_defaults_to_denis_when_voice_omitted():
+    assert say_module.get_voice_spec("ru") == say_module.VOICES["ru"]["denis"]
+
+
+def test_get_voice_spec_unsupported_voice_raises():
+    with pytest.raises(ValueError, match="Unsupported voice for ru: bogus"):
+        say_module.get_voice_spec("ru", "bogus")
 
 
 # -- validate_paths -----------------------------------------------------------
@@ -119,7 +138,7 @@ def test_validate_paths_missing_model_config_raises(monkeypatch, tmp_path):
 
 def test_synthesize_invokes_piper_and_returns_stdout(monkeypatch):
     spec = VoiceSpec(model=Path("/fake/model.onnx"), model_config=Path("/fake/model.onnx.json"))
-    monkeypatch.setattr(say_module, "validate_paths", lambda lang: spec)
+    monkeypatch.setattr(say_module, "validate_paths", lambda lang, voice: spec)
     monkeypatch.setattr(say_module, "PIPER_BIN", Path("/fake/piper"))
 
     mock_run = MagicMock(return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"raw-audio-bytes"))
@@ -143,6 +162,22 @@ def test_synthesize_invokes_piper_and_returns_stdout(monkeypatch):
     assert called_kwargs["check"] is True
 
 
+def test_synthesize_passes_voice_through_to_validate_paths(monkeypatch):
+    spec = VoiceSpec(model=Path("/fake/model.onnx"), model_config=Path("/fake/model.onnx.json"))
+    calls = []
+    monkeypatch.setattr(say_module, "validate_paths", lambda lang, voice: calls.append((lang, voice)) or spec)
+    monkeypatch.setattr(say_module, "PIPER_BIN", Path("/fake/piper"))
+    monkeypatch.setattr(
+        say_module.subprocess,
+        "run",
+        MagicMock(return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout=b"")),
+    )
+
+    say_module.synthesize(lang="ru", text="hi", voice="irina")
+
+    assert calls == [("ru", "irina")]
+
+
 # -- silence -------------------------------------------------------------------
 
 
@@ -157,7 +192,7 @@ def test_silence_is_zeroed_s16le_mono_of_requested_duration():
 
 
 def test_say_plays_synthesized_audio(monkeypatch):
-    monkeypatch.setattr(say_module, "synthesize", lambda *, lang, text: b"pcm-bytes")
+    monkeypatch.setattr(say_module, "synthesize", lambda *, lang, text, voice: b"pcm-bytes")
     mock_run = MagicMock(return_value=subprocess.CompletedProcess(args=[], returncode=0))
     monkeypatch.setattr(say_module.subprocess, "run", mock_run)
 
@@ -171,8 +206,20 @@ def test_say_plays_synthesized_audio(monkeypatch):
     assert called_kwargs["check"] is True
 
 
+def test_say_passes_voice_through_to_synthesize(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        say_module, "synthesize", lambda *, lang, text, voice: calls.append((lang, text, voice)) or b"pcm"
+    )
+    monkeypatch.setattr(say_module.subprocess, "run", MagicMock())
+
+    say_module.say(lang="ru", text="привет", voice="irina")
+
+    assert calls == [("ru", "привет", "irina")]
+
+
 def test_say_reports_error_and_does_not_raise(monkeypatch, capsys):
-    def boom(*, lang, text):
+    def boom(*, lang, text, voice):
         raise RuntimeError("piper exploded")
 
     monkeypatch.setattr(say_module, "synthesize", boom)
@@ -228,9 +275,17 @@ def test_cli_errors_when_no_text_and_stdin_is_a_tty():
 
 
 @pytest.mark.skipif(not PIPER_AVAILABLE, reason="piper binary or voice models not installed locally")
-@pytest.mark.parametrize("lang, text", [("en", "Hello, this is a test."), ("ru", "Привет, это тест.")])
-def test_synthesize_produces_audio_with_real_piper(lang, text):
-    audio = say_module.synthesize(lang=lang, text=text)
+@pytest.mark.parametrize(
+    "lang, text, voice",
+    [
+        ("en", "Hello, this is a test.", None),
+        ("ru", "Привет, это тест.", None),
+        ("ru", "Привет, это тест.", "irina"),
+        ("ru", "Привет, это тест.", "denis"),
+    ],
+)
+def test_synthesize_produces_audio_with_real_piper(lang, text, voice):
+    audio = say_module.synthesize(lang=lang, text=text, voice=voice)
 
     assert isinstance(audio, bytes)
     assert len(audio) > 0

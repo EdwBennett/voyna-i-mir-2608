@@ -83,7 +83,7 @@ def test_play_en_speaks_full_sentence_when_no_clause(monkeypatch, capsys):
 
     play_lang_module.play_en(1)()
 
-    mock_say.assert_called_once_with(lang="en", text=PAIR.en)
+    mock_say.assert_called_once_with(lang="en", text=PAIR.en, voice=None)
     assert PAIR.en in capsys.readouterr().out
 
 
@@ -93,7 +93,7 @@ def test_play_en_speaks_only_the_given_clause(monkeypatch):
 
     play_lang_module.play_en(1, clause=1)()
 
-    mock_say.assert_called_once_with(lang="en", text=FIRST_CLAUSE_EN)
+    mock_say.assert_called_once_with(lang="en", text=FIRST_CLAUSE_EN, voice=None)
 
 
 # -- play_ru -----------------------------------------------------------------------
@@ -105,7 +105,7 @@ def test_play_ru_speaks_full_sentence_when_no_clause(monkeypatch, capsys):
 
     play_lang_module.play_ru(1)()
 
-    mock_say.assert_called_once_with(lang="ru", text=PAIR.ru)
+    mock_say.assert_called_once_with(lang="ru", text=PAIR.ru, voice=None)
     assert PAIR.ru in capsys.readouterr().out
 
 
@@ -115,7 +115,16 @@ def test_play_ru_speaks_only_the_given_clause(monkeypatch):
 
     play_lang_module.play_ru(1, clause=1)()
 
-    mock_say.assert_called_once_with(lang="ru", text=FIRST_CLAUSE_RU)
+    mock_say.assert_called_once_with(lang="ru", text=FIRST_CLAUSE_RU, voice=None)
+
+
+def test_play_ru_passes_voice_through_to_say(monkeypatch):
+    mock_say = MagicMock()
+    monkeypatch.setattr(play_lang_module, "say", mock_say)
+
+    play_lang_module.play_ru(1, clause=1, voice="irina")()
+
+    mock_say.assert_called_once_with(lang="ru", text=FIRST_CLAUSE_RU, voice="irina")
 
 
 # -- print_en / print_ru ------------------------------------------------------------
@@ -146,7 +155,7 @@ def test_print_ru_fn_prints_without_speaking(monkeypatch, capsys):
 
 def test_render_en_returns_lead_in_silence_plus_synthesized_clause(monkeypatch):
     monkeypatch.setattr(
-        play_lang_module, "synthesize", lambda *, lang, text: f"AUDIO[{lang}]:{text}".encode()
+        play_lang_module, "synthesize", lambda *, lang, text, voice: f"AUDIO[{lang}]:{text}".encode()
     )
 
     audio = play_lang_module.render_en(1, clause=1)
@@ -157,10 +166,23 @@ def test_render_en_returns_lead_in_silence_plus_synthesized_clause(monkeypatch):
 
 def test_render_ru_returns_lead_in_silence_plus_synthesized_clause(monkeypatch):
     monkeypatch.setattr(
-        play_lang_module, "synthesize", lambda *, lang, text: f"AUDIO[{lang}]:{text}".encode()
+        play_lang_module, "synthesize", lambda *, lang, text, voice: f"AUDIO[{lang}]:{text}".encode()
     )
 
     audio = play_lang_module.render_ru(1, clause=1)
 
     expected_silence = play_lang_module.silence(play_lang_module.LEAD_IN_SECONDS)
     assert audio == expected_silence + f"AUDIO[ru]:{FIRST_CLAUSE_RU}".encode()
+
+
+def test_render_ru_passes_voice_through_to_synthesize(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        play_lang_module,
+        "synthesize",
+        lambda *, lang, text, voice: calls.append((lang, text, voice)) or b"AUDIO",
+    )
+
+    play_lang_module.render_ru(1, clause=1, voice="irina")
+
+    assert calls == [("ru", FIRST_CLAUSE_RU, "irina")]

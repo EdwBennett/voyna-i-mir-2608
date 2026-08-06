@@ -19,12 +19,16 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 HOME = Path.home()
 PIPER_BIN = HOME / ".local/bin/piper"
 SAMPLE_RATE = 22050
 LEAD_IN_SECONDS = 0.5
 LANGUAGES: dict[str, VoiceSpec] = {}
+# Alternate named voices per language, selectable via the `voice` argument.
+# Languages with only one voice don't need an entry here.
+VOICES: dict[str, dict[str, VoiceSpec]] = {}
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,27 +44,47 @@ LANGUAGES.update(
             model_config=HOME / ".local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx.json",
         ),
         "ru": VoiceSpec(
-            # model=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx",
-            # model_config=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx.json",
             model=HOME / ".local/share/piper-voices/ru/ru_RU/denis/medium/ru_RU-denis-medium.onnx",
             model_config=HOME / ".local/share/piper-voices/ru/ru_RU/denis/medium/ru_RU-denis-medium.onnx.json",
         ),
     }
 )
 
+VOICES.update(
+    {
+        "ru": {
+            "irina": VoiceSpec(
+                model=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx",
+                model_config=HOME
+                / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx.json",
+            ),
+            "denis": LANGUAGES["ru"],
+        },
+    }
+)
 
-def get_voice_spec(lang: str) -> VoiceSpec:
-    """Return the `VoiceSpec` registered for `lang`, or raise `ValueError`."""
+
+def get_voice_spec(lang: str, voice: Optional[str] = None) -> VoiceSpec:
+    """Return the `VoiceSpec` for `lang`, or its `voice` variant if given.
+
+    Raises `ValueError` for an unsupported language, or an unsupported voice
+    for a language that has named voice variants.
+    """
+    if voice is not None:
+        try:
+            return VOICES[lang][voice]
+        except KeyError as exc:
+            raise ValueError(f"Unsupported voice for {lang}: {voice}") from exc
     try:
         return LANGUAGES[lang]
     except KeyError as exc:
         raise ValueError(f"Unsupported language: {lang}") from exc
 
 
-def validate_paths(lang: str) -> VoiceSpec:
-    """Return `lang`'s `VoiceSpec` after checking the piper binary and model files exist."""
-    spec = get_voice_spec(lang)
-    
+def validate_paths(lang: str, voice: Optional[str] = None) -> VoiceSpec:
+    """Return the `VoiceSpec` (for `lang`/`voice`) after checking the piper binary and model files exist."""
+    spec = get_voice_spec(lang, voice)
+
     if not PIPER_BIN.exists():
         raise FileNotFoundError(f"Piper binary not found at {PIPER_BIN}")
         
@@ -72,9 +96,9 @@ def validate_paths(lang: str) -> VoiceSpec:
     return spec
 
 
-def synthesize(*, lang: str, text: str) -> bytes:
+def synthesize(*, lang: str, text: str, voice: Optional[str] = None) -> bytes:
     """Render text to raw S16_LE mono PCM audio at SAMPLE_RATE, without playing it."""
-    spec = validate_paths(lang)
+    spec = validate_paths(lang, voice)
     piper_cmd = [
         str(PIPER_BIN),
         "--model",
@@ -98,8 +122,8 @@ def silence(duration_seconds: float) -> bytes:
     return b"\x00" * (num_samples * 2)
 
 
-def say(*, lang: str, text: str) -> None:
-    """Synthesize `text` in `lang` and play it immediately via `aplay`.
+def say(*, lang: str, text: str, voice: Optional[str] = None) -> None:
+    """Synthesize `text` in `lang` (optionally a specific `voice`) and play it immediately via `aplay`.
 
     Errors (missing binary/models, subprocess failure) are caught and
     reported to stderr rather than raised, so callers can fire-and-forget.
@@ -118,7 +142,7 @@ def say(*, lang: str, text: str) -> None:
     ]
 
     try:
-        audio = synthesize(lang=lang, text=text)
+        audio = synthesize(lang=lang, text=text, voice=voice)
         subprocess.run(play_cmd, input=silence(LEAD_IN_SECONDS) + audio, check=True)
     except Exception as exc:  # noqa: BLE001 - CLI safety net, always report and continue rather than crash
         print(f"Error during playback: {exc}", file=sys.stderr)
