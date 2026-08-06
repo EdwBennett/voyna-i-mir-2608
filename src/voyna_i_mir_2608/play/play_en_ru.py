@@ -10,7 +10,7 @@ from collections.abc import Callable
 from typing import Optional
 
 from voyna_i_mir_2608.db.sentence_pairs import parse_id_list
-from voyna_i_mir_2608.play.play import play
+from voyna_i_mir_2608.play import play
 from voyna_i_mir_2608.play.play_lang import play_en, play_ru, print_en, print_ru, render_en, render_ru
 from voyna_i_mir_2608.play.play_wait import play_wait
 from voyna_i_mir_2608.say.say import SAMPLE_RATE, silence
