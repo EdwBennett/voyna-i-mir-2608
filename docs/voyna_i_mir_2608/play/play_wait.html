@@ -64,11 +64,11 @@
 </span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="k">def</span><span class="w"> </span><span class="nf">play_wait</span><span class="p">(</span><span class="n">seconds</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a function that prints a blank line then sleeps for `seconds`.&quot;&quot;&quot;</span>
 </span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">en_fn</span><span class="p">():</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">fn</span><span class="p">():</span>
 </span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>        <span class="nb">print</span><span class="p">()</span>
 </span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span>
 </span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>    <span class="k">return</span> <span class="n">en_fn</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>    <span class="k">return</span> <span class="n">fn</span>
 </span></pre></div>
 
 
@@ -87,11 +87,11 @@
             <div class="pdoc-code codehilite"><pre><span></span><span id="play_wait-7"><a href="#play_wait-7"><span class="linenos"> 7</span></a><span class="k">def</span><span class="w"> </span><span class="nf">play_wait</span><span class="p">(</span><span class="n">seconds</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]:</span>
 </span><span id="play_wait-8"><a href="#play_wait-8"><span class="linenos"> 8</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a function that prints a blank line then sleeps for `seconds`.&quot;&quot;&quot;</span>
 </span><span id="play_wait-9"><a href="#play_wait-9"><span class="linenos"> 9</span></a>
-</span><span id="play_wait-10"><a href="#play_wait-10"><span class="linenos">10</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">en_fn</span><span class="p">():</span>
+</span><span id="play_wait-10"><a href="#play_wait-10"><span class="linenos">10</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">fn</span><span class="p">():</span>
 </span><span id="play_wait-11"><a href="#play_wait-11"><span class="linenos">11</span></a>        <span class="nb">print</span><span class="p">()</span>
 </span><span id="play_wait-12"><a href="#play_wait-12"><span class="linenos">12</span></a>        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span>
 </span><span id="play_wait-13"><a href="#play_wait-13"><span class="linenos">13</span></a>
-</span><span id="play_wait-14"><a href="#play_wait-14"><span class="linenos">14</span></a>    <span class="k">return</span> <span class="n">en_fn</span>
+</span><span id="play_wait-14"><a href="#play_wait-14"><span class="linenos">14</span></a>    <span class="k">return</span> <span class="n">fn</span>
 </span></pre></div>
 
 
