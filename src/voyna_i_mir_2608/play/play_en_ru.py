@@ -17,22 +17,22 @@ from voyna_i_mir_2608.say.say import SAMPLE_RATE, silence
 
 
 def play_en_ru(
-    id: str,
+    id_: str,
     delay: int,
     clause: Optional[int] = None,
     output: Optional[str] = None,
     text_only: bool = False,
 ) -> None:
-    """Play, print, or render (to mp3) the English/Russian pairs matching `id`.
+    """Play, print, or render (to mp3) the English/Russian pairs matching `id_`.
 
-    `id` is a printer-style spec (e.g. "1,3,5-8") parsed by `parse_id_list`.
+    `id_` is a printer-style spec (e.g. "1,3,5-8") parsed by `parse_id_list`.
     `output` and `text_only` are mutually exclusive; with neither set, each
     pair is spoken aloud (English, then a `delay`-second pause, then Russian).
     """
     if output is not None and text_only:
         raise ValueError("output and text_only are mutually exclusive")
 
-    ids = parse_id_list(id)
+    ids = parse_id_list(id_)
 
     if output is not None:
         _render_to_mp3(ids, delay, clause, output)
