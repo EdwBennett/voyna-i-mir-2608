@@ -5,8 +5,8 @@ from typing import Optional
 
 from voyna_i_mir_2608.db.sentence_pairs import parse_id_list
 from voyna_i_mir_2608.play.play import play
-from voyna_i_mir_2608.play.play_en import play_en, render_en
-from voyna_i_mir_2608.play.play_ru import play_ru, render_ru
+from voyna_i_mir_2608.play.play_en import play_en, print_en, render_en
+from voyna_i_mir_2608.play.play_ru import play_ru, print_ru, render_ru
 from voyna_i_mir_2608.play.play_wait import play_wait
 from voyna_i_mir_2608.say.say import SAMPLE_RATE, silence
 
@@ -16,11 +16,20 @@ def play_en_ru(
     delay: int,
     clause: Optional[int] = None,
     output: Optional[str] = None,
+    text_only: bool = False,
 ) -> None:
+    if output is not None and text_only:
+        raise ValueError("output and text_only are mutually exclusive")
+
     ids = parse_id_list(id)
 
     if output is not None:
         _render_to_mp3(ids, delay, clause, output)
+        return
+
+    if text_only:
+        for id_ in ids:
+            play(print_en(id_, clause), None, print_ru(id_, clause))
         return
 
     for id_ in ids:
@@ -70,11 +79,23 @@ if __name__ == "__main__":
     parser.add_argument(
         "clause", type=int, nargs="?", default=None, help="Optional clause index within the sentence"
     )
-    parser.add_argument(
+    output_group = parser.add_mutually_exclusive_group()
+    output_group.add_argument(
         "-o", "--output",
         default=None,
         help="Write to this .mp3 path instead of playing live",
     )
+    output_group.add_argument(
+        "-t", "--text-only",
+        action="store_true",
+        help="Print the sentence pairs with no audio and no delays",
+    )
     args = parser.parse_args()
 
-    play_en_ru(args.id, delay=args.delay, clause=args.clause, output=args.output)
+    play_en_ru(
+        args.id,
+        delay=args.delay,
+        clause=args.clause,
+        output=args.output,
+        text_only=args.text_only,
+    )

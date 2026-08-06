@@ -24,19 +24,34 @@ def _select_en_text(pair: SentencePair, clause: Optional[int]) -> str:
     return re.split(r'[,.;-]+', pair.words)[clause - 1].strip()
 
 
+def _print_en(pair: SentencePair, clause: Optional[int], en_say: str) -> None:
+    print (f"\n{pair.en}")
+    if clause is None:
+        print (f"{pair.words}")
+    else:
+        print (f"{en_say}")
+
+
 def play_en(id: int, clause: Optional[int] = None) -> Callable[[], None]:
 
     def en_fn():
         pair = _load_pair(id)
-        print (f"\n{pair.en}")
         en_say = _select_en_text(pair, clause)
-        if clause is None:
-            print (f"{pair.words}")
-        else:
-            print (f"{en_say}")
+        _print_en(pair, clause, en_say)
         say(lang = "en", text=en_say)
 
     return en_fn
+
+
+def print_en(id: int, clause: Optional[int] = None) -> Callable[[], None]:
+    """Print the English utterance for `id`/`clause` without speaking it."""
+
+    def fn():
+        pair = _load_pair(id)
+        en_say = _select_en_text(pair, clause)
+        _print_en(pair, clause, en_say)
+
+    return fn
 
 
 def render_en(id: int, clause: Optional[int] = None) -> bytes:
