@@ -29,8 +29,9 @@ def play_en_ru(
     `id_` is a printer-style spec (e.g. "1,3,5-8") parsed by `parse_id_list`.
     `output`, `text_only`, and `interactive` are mutually exclusive; with none
     set, each pair is spoken aloud (English, then a `delay`-second pause, then
-    Russian). With `interactive` set, the pause instead waits for the space
-    bar to be pressed.
+    Russian). With `interactive` set, each pause instead waits for the space
+    bar; after Russian, pressing "r" replays the Russian audio (as many times
+    as desired) before the space bar advances to the next pair.
     """
     if sum((output is not None, text_only, interactive)) > 1:
         raise ValueError("output, text_only, and interactive are mutually exclusive")
@@ -43,14 +44,19 @@ def play_en_ru(
 
     if text_only:
         for pair_id in ids:
-            play(print_en(pair_id, clause), None, print_ru(pair_id, clause))
+            play(print_en(pair_id, clause), None, print_ru(pair_id, clause), None)
         return
 
     for pair_id in ids:
         fn_call: Callable[[], None] = play_en(pair_id, clause)
-        fn_wait: Callable[[], None] = play_wait_key() if interactive else play_wait(delay)
         fn_response: Callable[[], None] = play_ru(pair_id, clause)
-        play(fn_call, fn_wait, fn_response)
+        if interactive:
+            fn_wait_before: Callable[[], None] = play_wait_key()
+            fn_wait_after: Callable[[], None] = play_wait_key(repeat_key="r", repeat_fn=fn_response)
+        else:
+            fn_wait_before = play_wait(delay)
+            fn_wait_after = play_wait(delay)
+        play(fn_call, fn_wait_before, fn_response, fn_wait_after)
 
 
 def _render_to_mp3(ids: list[int], delay: int, clause: Optional[int], output: str) -> None:
@@ -107,7 +113,8 @@ if __name__ == "__main__":
     output_group.add_argument(
         "-i", "--interactive",
         action="store_true",
-        help="Wait for the space bar instead of the delay between English and Russian audio",
+        help="Wait for the space bar instead of the delay between English and Russian audio; "
+             "press 'r' after Russian to replay it",
     )
     args = parser.parse_args()
 

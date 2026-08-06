@@ -94,6 +94,25 @@ def test_play_en_ru_interactive_waits_for_key_instead_of_sleeping(monkeypatch):
     assert calls == [("en", PAIR.en), ("key-wait",), ("ru", PAIR.ru), ("key-wait",)]
 
 
+def test_play_en_ru_interactive_r_replays_russian_after_response(monkeypatch):
+    calls = []
+    mock_say = MagicMock(side_effect=lambda *, lang, text: calls.append((lang, text)))
+    monkeypatch.setattr(play_lang_module, "say", mock_say)
+    monkeypatch.setattr(play_wait_module.sys.stdin, "fileno", MagicMock(return_value=0))
+    monkeypatch.setattr(play_wait_module.termios, "tcgetattr", MagicMock(return_value="old-settings"))
+    monkeypatch.setattr(play_wait_module.termios, "tcsetattr", MagicMock())
+    monkeypatch.setattr(play_wait_module.tty, "setraw", MagicMock())
+    # First wait (before response): straight to space. Second wait (after
+    # response): "r" once to replay Russian, then space to advance.
+    monkeypatch.setattr(
+        play_wait_module.sys.stdin, "read", MagicMock(side_effect=[" ", "r", " "])
+    )
+
+    play_en_ru_module.play_en_ru("1", delay=3, interactive=True)
+
+    assert calls == [("en", PAIR.en), ("ru", PAIR.ru), ("ru", PAIR.ru)]
+
+
 def test_play_en_ru_processes_each_id_in_the_spec(monkeypatch):
     seen_ids = []
     monkeypatch.setattr(play_lang_module, "say", lambda *, lang, text: None)
