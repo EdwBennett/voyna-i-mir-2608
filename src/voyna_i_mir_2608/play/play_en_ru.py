@@ -1,17 +1,28 @@
 
-import sys
+import subprocess
 from collections.abc import Callable
 from typing import Optional
 
 from voyna_i_mir_2608.db.sentence_pairs import parse_id_list
 from voyna_i_mir_2608.play.play import play
-from voyna_i_mir_2608.play.play_en import play_en
+from voyna_i_mir_2608.play.play_en import play_en, render_en
+from voyna_i_mir_2608.play.play_ru import play_ru, render_ru
 from voyna_i_mir_2608.play.play_wait import play_wait
-from voyna_i_mir_2608.play.play_ru import play_ru
+from voyna_i_mir_2608.say.say import SAMPLE_RATE, silence
 
 
-def play_en_ru(id: str, delay: int, clause: Optional[int] = None) -> None:
+def play_en_ru(
+    id: str,
+    delay: int,
+    clause: Optional[int] = None,
+    output: Optional[str] = None,
+) -> None:
     ids = parse_id_list(id)
+
+    if output is not None:
+        _render_to_mp3(ids, delay, clause, output)
+        return
+
     for id_ in ids:
         fn_call: Callable[[], None] = play_en(id_, clause)
         fn_wait: Callable[[], None] = play_wait(delay)
@@ -19,15 +30,51 @@ def play_en_ru(id: str, delay: int, clause: Optional[int] = None) -> None:
         play(fn_call, fn_wait, fn_response)
 
 
+def _render_to_mp3(ids: list[int], delay: int, clause: Optional[int], output: str) -> None:
+    """Synthesize every id's en/ru pair (with delay silence) and encode straight to mp3.
+
+    Skips live playback entirely, so this only takes as long as synthesis and
+    encoding, not the real-time duration of the audio and delay.
+    """
+    if not output.endswith(".mp3"):
+        raise ValueError(f"Output path must end with .mp3: {output}")
+
+    delay_silence = silence(delay)
+    audio = b"".join(
+        render_en(id_, clause) + delay_silence + render_ru(id_, clause) + delay_silence
+        for id_ in ids
+    )
+
+    ffmpeg_cmd = [
+        "ffmpeg",
+        "-y",
+        "-hide_banner",
+        "-loglevel", "error",
+        "-f", "s16le",
+        "-ar", str(SAMPLE_RATE),
+        "-ac", "1",
+        "-i", "-",
+        output,
+    ]
+    subprocess.run(ffmpeg_cmd, input=audio, check=True)
+
+
 if __name__ == "__main__":
-    # Require at least id and delay
-    if len(sys.argv) < 3 or len(sys.argv) > 4:
-        raise SystemExit("Usage: uv run play_en_ru.py <id> <delay> [<clause>]")
+    import argparse
 
-    id_ = sys.argv[1]
-    delay = int(sys.argv[2])
+    parser = argparse.ArgumentParser(
+        description="Play (or render to mp3) English/Russian sentence pairs."
+    )
+    parser.add_argument("id", help="Sentence pair id or id spec, e.g. '1,3,5-8'")
+    parser.add_argument("delay", type=int, help="Delay in seconds between English and Russian audio")
+    parser.add_argument(
+        "clause", type=int, nargs="?", default=None, help="Optional clause index within the sentence"
+    )
+    parser.add_argument(
+        "-o", "--output",
+        default=None,
+        help="Write to this .mp3 path instead of playing live",
+    )
+    args = parser.parse_args()
 
-    # Optional clause: use a default if not provided
-    clause = int(sys.argv[3]) if len(sys.argv) == 4 else None
-
-    play_en_ru(id_, delay=delay, clause=clause)
+    play_en_ru(args.id, delay=args.delay, clause=args.clause, output=args.output)

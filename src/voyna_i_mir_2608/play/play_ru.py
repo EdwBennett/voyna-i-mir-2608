@@ -8,22 +8,39 @@ from voyna_i_mir_2608.db.sentence_pairs import (
     SentencePairs,
     parse_id_list,
 )
-from voyna_i_mir_2608.say.say import say
+from voyna_i_mir_2608.say.say import LEAD_IN_SECONDS, say, silence, synthesize
 
 JSON_PATH = Path(__file__).resolve().parent.parent / "db" / "50_russian_english_ipa_words.json"
+
+
+def _load_pair(id: int) -> SentencePair:
+    pairs = SentencePairs(JSON_PATH).filter([id]).to_list()
+    return pairs[0]
+
+
+def _select_ru_text(pair: SentencePair, clause: Optional[int]) -> str:
+    if clause is None:
+        return pair.ru
+    return re.split(r'[,.;-]+', pair.ru)[clause - 1].strip()
+
 
 def play_ru(id: int, clause: Optional[int] = None) -> Callable[[], None]:
 
     def ru_fn():
-        pairs = SentencePairs(JSON_PATH).filter([id]).to_list()
-        pair = pairs[0]
+        pair = _load_pair(id)
+        ru_say = _select_ru_text(pair, clause)
         if clause is None:
-            ru_say: str = pair.ru
             print (f"{pair.ru}")
         else:
-            ru_say = re.split(r'[,.;-]+', pair.ru)[clause-1].strip()
             print (f"{ru_say}")
         print (f"{pair.ipa}\n")
         say(lang = "ru", text=ru_say)
 
     return ru_fn
+
+
+def render_ru(id: int, clause: Optional[int] = None) -> bytes:
+    """Synthesize the Russian utterance for `id`/`clause` without playing it."""
+    pair = _load_pair(id)
+    ru_say = _select_ru_text(pair, clause)
+    return silence(LEAD_IN_SECONDS) + synthesize(lang="ru", text=ru_say)
