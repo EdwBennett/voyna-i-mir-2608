@@ -42,14 +42,14 @@ def play_en_ru(
         return
 
     if text_only:
-        for id_ in ids:
-            play(print_en(id_, clause), None, print_ru(id_, clause))
+        for pair_id in ids:
+            play(print_en(pair_id, clause), None, print_ru(pair_id, clause))
         return
 
-    for id_ in ids:
-        fn_call: Callable[[], None] = play_en(id_, clause)
+    for pair_id in ids:
+        fn_call: Callable[[], None] = play_en(pair_id, clause)
         fn_wait: Callable[[], None] = play_wait_key() if interactive else play_wait(delay)
-        fn_response: Callable[[], None] = play_ru(id_, clause)
+        fn_response: Callable[[], None] = play_ru(pair_id, clause)
         play(fn_call, fn_wait, fn_response)
 
 
