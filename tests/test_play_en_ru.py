@@ -39,6 +39,11 @@ def test_play_en_ru_rejects_output_and_text_only_together():
         play_en_ru_module.play_en_ru("1", delay=1, output="out.mp3", text_only=True)
 
 
+def test_play_en_ru_rejects_text_only_and_interactive_together():
+    with pytest.raises(ValueError, match="mutually exclusive"):
+        play_en_ru_module.play_en_ru("1", delay=1, text_only=True, interactive=True)
+
+
 # -- play_en_ru: text_only mode -----------------------------------------------------
 
 
@@ -71,6 +76,22 @@ def test_play_en_ru_speaks_english_then_waits_then_russian(monkeypatch):
 
     # play() calls fn_wait both before and after the response.
     assert calls == [("en", PAIR.en), ("wait", 3), ("ru", PAIR.ru), ("wait", 3)]
+
+
+def test_play_en_ru_interactive_waits_for_key_instead_of_sleeping(monkeypatch):
+    calls = []
+    mock_say = MagicMock(side_effect=lambda *, lang, text: calls.append((lang, text)))
+    mock_sleep = MagicMock()
+    mock_wait_key = MagicMock(return_value=lambda: calls.append(("key-wait",)))
+    monkeypatch.setattr(play_lang_module, "say", mock_say)
+    monkeypatch.setattr(play_wait_module.time, "sleep", mock_sleep)
+    monkeypatch.setattr(play_en_ru_module, "play_wait_key", mock_wait_key)
+
+    play_en_ru_module.play_en_ru("1", delay=3, interactive=True)
+
+    mock_sleep.assert_not_called()
+    # play() calls fn_wait both before and after the response.
+    assert calls == [("en", PAIR.en), ("key-wait",), ("ru", PAIR.ru), ("key-wait",)]
 
 
 def test_play_en_ru_processes_each_id_in_the_spec(monkeypatch):
@@ -144,6 +165,13 @@ def test_render_to_mp3_builds_audio_and_invokes_ffmpeg(monkeypatch):
 
 def test_cli_rejects_output_and_text_only_together():
     result = run_cli(["1", "1", "-o", "out.mp3", "-t"])
+
+    assert result.returncode == 2
+    assert "not allowed with argument" in result.stderr
+
+
+def test_cli_rejects_text_only_and_interactive_together():
+    result = run_cli(["1", "1", "-t", "-i"])
 
     assert result.returncode == 2
     assert "not allowed with argument" in result.stderr

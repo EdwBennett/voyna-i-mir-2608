@@ -2,7 +2,7 @@
 
 Also runnable as a script:
 
-    python -m voyna_i_mir_2608.play.play_en_ru <id> <delay> [clause] [-o OUTPUT | -t]
+    python -m voyna_i_mir_2608.play.play_en_ru <id> <delay> [clause] [-o OUTPUT | -t | -i]
 """
 
 import subprocess
@@ -12,7 +12,7 @@ from typing import Optional
 from voyna_i_mir_2608.db.sentence_pairs import parse_id_list
 from voyna_i_mir_2608.play import play
 from voyna_i_mir_2608.play.play_lang import play_en, play_ru, print_en, print_ru, render_en, render_ru
-from voyna_i_mir_2608.play.play_wait import play_wait
+from voyna_i_mir_2608.play.play_wait import play_wait, play_wait_key
 from voyna_i_mir_2608.say.say import SAMPLE_RATE, silence
 
 
@@ -22,15 +22,18 @@ def play_en_ru(
     clause: Optional[int] = None,
     output: Optional[str] = None,
     text_only: bool = False,
+    interactive: bool = False,
 ) -> None:
     """Play, print, or render (to mp3) the English/Russian pairs matching `id_`.
 
     `id_` is a printer-style spec (e.g. "1,3,5-8") parsed by `parse_id_list`.
-    `output` and `text_only` are mutually exclusive; with neither set, each
-    pair is spoken aloud (English, then a `delay`-second pause, then Russian).
+    `output`, `text_only`, and `interactive` are mutually exclusive; with none
+    set, each pair is spoken aloud (English, then a `delay`-second pause, then
+    Russian). With `interactive` set, the pause instead waits for the space
+    bar to be pressed.
     """
-    if output is not None and text_only:
-        raise ValueError("output and text_only are mutually exclusive")
+    if sum((output is not None, text_only, interactive)) > 1:
+        raise ValueError("output, text_only, and interactive are mutually exclusive")
 
     ids = parse_id_list(id_)
 
@@ -45,7 +48,7 @@ def play_en_ru(
 
     for id_ in ids:
         fn_call: Callable[[], None] = play_en(id_, clause)
-        fn_wait: Callable[[], None] = play_wait(delay)
+        fn_wait: Callable[[], None] = play_wait_key() if interactive else play_wait(delay)
         fn_response: Callable[[], None] = play_ru(id_, clause)
         play(fn_call, fn_wait, fn_response)
 
@@ -101,6 +104,11 @@ if __name__ == "__main__":
         action="store_true",
         help="Print the sentence pairs with no audio and no delays",
     )
+    output_group.add_argument(
+        "-i", "--interactive",
+        action="store_true",
+        help="Wait for the space bar instead of the delay between English and Russian audio",
+    )
     args = parser.parse_args()
 
     play_en_ru(
@@ -109,4 +117,5 @@ if __name__ == "__main__":
         clause=args.clause,
         output=args.output,
         text_only=args.text_only,
+        interactive=args.interactive,
     )
