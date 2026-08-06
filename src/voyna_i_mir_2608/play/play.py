@@ -13,3 +13,5 @@ def play(fn_call: Callable[[], None] | None,
         fn_wait()
     if fn_response is not None:
         fn_response()
+    if fn_wait is not None:
+        fn_wait()
