@@ -48,6 +48,7 @@ LANGUAGES.update(
 
 
 def get_voice_spec(lang: str) -> VoiceSpec:
+    """Return the `VoiceSpec` registered for `lang`, or raise `ValueError`."""
     try:
         return LANGUAGES[lang]
     except KeyError as exc:
@@ -55,6 +56,7 @@ def get_voice_spec(lang: str) -> VoiceSpec:
 
 
 def validate_paths(lang: str) -> VoiceSpec:
+    """Return `lang`'s `VoiceSpec` after checking the piper binary and model files exist."""
     spec = get_voice_spec(lang)
     
     if not PIPER_BIN.exists():
@@ -95,6 +97,11 @@ def silence(duration_seconds: float) -> bytes:
 
 
 def say(*, lang: str, text: str) -> None:
+    """Synthesize `text` in `lang` and play it immediately via `aplay`.
+
+    Errors (missing binary/models, subprocess failure) are caught and
+    reported to stderr rather than raised, so callers can fire-and-forget.
+    """
     play_cmd = [
         "aplay",
         "-q",

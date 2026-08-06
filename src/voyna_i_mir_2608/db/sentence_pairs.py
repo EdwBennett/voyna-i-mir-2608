@@ -55,6 +55,8 @@ def parse_id_list(spec: str) -> list[int]:
 
 @dataclass(frozen=True, slots=True)
 class SentencePair:
+    """A single Russian/English sentence with its IPA transcription and id."""
+
     id: int
     ru: str
     ipa: str
@@ -63,6 +65,12 @@ class SentencePair:
 
 
 class SentencePairs:
+    """Chainable, lazily-loaded view over a JSON file of `SentencePair` records.
+
+    `filter()` returns a new `SentencePairs` narrowed to the given ids;
+    the underlying JSON is only read (and cached) on first iteration.
+    """
+
     def __init__(self, path: str | os.PathLike[str]):
         self.path = path
         self._wanted_ids: set[int] | None = None

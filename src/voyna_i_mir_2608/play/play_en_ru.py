@@ -1,3 +1,9 @@
+"""Top-level driver: play, print, or render English/Russian sentence pairs.
+
+Also runnable as a script:
+
+    python -m voyna_i_mir_2608.play.play_en_ru <id> <delay> [clause] [-o OUTPUT | -t]
+"""
 
 import subprocess
 from collections.abc import Callable
@@ -18,6 +24,12 @@ def play_en_ru(
     output: Optional[str] = None,
     text_only: bool = False,
 ) -> None:
+    """Play, print, or render (to mp3) the English/Russian pairs matching `id`.
+
+    `id` is a printer-style spec (e.g. "1,3,5-8") parsed by `parse_id_list`.
+    `output` and `text_only` are mutually exclusive; with neither set, each
+    pair is spoken aloud (English, then a `delay`-second pause, then Russian).
+    """
     if output is not None and text_only:
         raise ValueError("output and text_only are mutually exclusive")
 

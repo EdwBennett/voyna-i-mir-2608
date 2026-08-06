@@ -1,3 +1,5 @@
+"""Russian half of an English/Russian playback pair, keyed by sentence id."""
+
 from pathlib import Path
 from typing import Optional
 import re
@@ -14,17 +16,20 @@ JSON_PATH = Path(__file__).resolve().parent.parent / "db" / "50_russian_english_
 
 
 def _load_pair(id: int) -> SentencePair:
+    """Look up the `SentencePair` with the given id in the bundled JSON dataset."""
     pairs = SentencePairs(JSON_PATH).filter([id]).to_list()
     return pairs[0]
 
 
 def _select_ru_text(pair: SentencePair, clause: Optional[int]) -> str:
+    """Return the full Russian sentence, or just one clause if `clause` is given."""
     if clause is None:
         return pair.ru
     return re.split(r'[,.;-]+', pair.ru)[clause - 1].strip()
 
 
 def _print_ru(pair: SentencePair, clause: Optional[int], ru_say: str) -> None:
+    """Print the Russian sentence (or `ru_say`'s clause) and its IPA transcription."""
     if clause is None:
         print (f"{pair.ru}")
     else:
@@ -33,6 +38,7 @@ def _print_ru(pair: SentencePair, clause: Optional[int], ru_say: str) -> None:
 
 
 def play_ru(id: int, clause: Optional[int] = None) -> Callable[[], None]:
+    """Return a function that prints and speaks the Russian utterance for `id`/`clause`."""
 
     def ru_fn():
         pair = _load_pair(id)

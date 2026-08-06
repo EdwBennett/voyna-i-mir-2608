@@ -1,3 +1,5 @@
+"""English half of an English/Russian playback pair, keyed by sentence id."""
+
 from pathlib import Path
 from typing import Optional
 import re
@@ -14,17 +16,20 @@ JSON_PATH = Path(__file__).resolve().parent.parent / "db" / "50_russian_english_
 
 
 def _load_pair(id: int) -> SentencePair:
+    """Look up the `SentencePair` with the given id in the bundled JSON dataset."""
     pairs = SentencePairs(JSON_PATH).filter([id]).to_list()
     return pairs[0]
 
 
 def _select_en_text(pair: SentencePair, clause: Optional[int]) -> str:
+    """Return the full English sentence, or just one clause if `clause` is given."""
     if clause is None:
         return pair.en
     return re.split(r'[,.;-]+', pair.words)[clause - 1].strip()
 
 
 def _print_en(pair: SentencePair, clause: Optional[int], en_say: str) -> None:
+    """Print the English sentence (or `en_say`'s clause) for `pair` to stdout."""
     print (f"\n{pair.en}")
     if clause is None:
         print (f"{pair.words}")
@@ -33,6 +38,7 @@ def _print_en(pair: SentencePair, clause: Optional[int], en_say: str) -> None:
 
 
 def play_en(id: int, clause: Optional[int] = None) -> Callable[[], None]:
+    """Return a function that prints and speaks the English utterance for `id`/`clause`."""
 
     def en_fn():
         pair = _load_pair(id)
