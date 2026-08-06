@@ -20,7 +20,7 @@ def play_wait_key(
     repeat_key: Optional[str] = None,
     repeat_fn: Optional[Callable[[], None]] = None,
 ) -> Callable[[], None]:
-    """Return a function that prints a blank line then blocks until the space bar is pressed.
+    """Return a function that prints which keys are waited on, then blocks until the space bar is pressed.
 
     If `repeat_key` is given, pressing it calls `repeat_fn` and resumes
     waiting instead of returning; any other key is ignored. Terminal mode is
@@ -29,7 +29,10 @@ def play_wait_key(
     """
 
     def fn():
-        print()
+        if repeat_key is not None:
+            print(f"[space] continue, [{repeat_key}] replay")
+        else:
+            print("[space] continue")
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
