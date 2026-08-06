@@ -13,14 +13,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import voyna_i_mir_2608.play.play_en as play_en_module
 import voyna_i_mir_2608.play.play_en_ru as play_en_ru_module
-import voyna_i_mir_2608.play.play_ru as play_ru_module
+import voyna_i_mir_2608.play.play_lang as play_lang_module
 import voyna_i_mir_2608.play.play_wait as play_wait_module
 
 PLAY_EN_RU_PY = Path(__file__).resolve().parent.parent / "src" / "voyna_i_mir_2608" / "play" / "play_en_ru.py"
 
-PAIR = play_en_module._load_pair(1)
+PAIR = play_lang_module._load_pair(1)
 
 
 def run_cli(args: list[str]) -> subprocess.CompletedProcess[str]:
@@ -44,17 +43,14 @@ def test_play_en_ru_rejects_output_and_text_only_together():
 
 
 def test_play_en_ru_text_only_prints_without_speaking_or_waiting(monkeypatch, capsys):
-    mock_say_en = MagicMock()
-    mock_say_ru = MagicMock()
+    mock_say = MagicMock()
     mock_sleep = MagicMock()
-    monkeypatch.setattr(play_en_module, "say", mock_say_en)
-    monkeypatch.setattr(play_ru_module, "say", mock_say_ru)
+    monkeypatch.setattr(play_lang_module, "say", mock_say)
     monkeypatch.setattr(play_wait_module.time, "sleep", mock_sleep)
 
     play_en_ru_module.play_en_ru("1", delay=5, text_only=True)
 
-    mock_say_en.assert_not_called()
-    mock_say_ru.assert_not_called()
+    mock_say.assert_not_called()
     mock_sleep.assert_not_called()
     out = capsys.readouterr().out
     assert PAIR.en in out
@@ -66,11 +62,9 @@ def test_play_en_ru_text_only_prints_without_speaking_or_waiting(monkeypatch, ca
 
 def test_play_en_ru_speaks_english_then_waits_then_russian(monkeypatch):
     calls = []
-    mock_say_en = MagicMock(side_effect=lambda *, lang, text: calls.append(("en", text)))
-    mock_say_ru = MagicMock(side_effect=lambda *, lang, text: calls.append(("ru", text)))
+    mock_say = MagicMock(side_effect=lambda *, lang, text: calls.append((lang, text)))
     mock_sleep = MagicMock(side_effect=lambda seconds: calls.append(("wait", seconds)))
-    monkeypatch.setattr(play_en_module, "say", mock_say_en)
-    monkeypatch.setattr(play_ru_module, "say", mock_say_ru)
+    monkeypatch.setattr(play_lang_module, "say", mock_say)
     monkeypatch.setattr(play_wait_module.time, "sleep", mock_sleep)
 
     play_en_ru_module.play_en_ru("1", delay=3)
@@ -81,8 +75,7 @@ def test_play_en_ru_speaks_english_then_waits_then_russian(monkeypatch):
 
 def test_play_en_ru_processes_each_id_in_the_spec(monkeypatch):
     seen_ids = []
-    monkeypatch.setattr(play_en_module, "say", lambda *, lang, text: None)
-    monkeypatch.setattr(play_ru_module, "say", lambda *, lang, text: None)
+    monkeypatch.setattr(play_lang_module, "say", lambda *, lang, text: None)
     monkeypatch.setattr(play_wait_module.time, "sleep", lambda seconds: None)
     monkeypatch.setattr(
         play_en_ru_module,
@@ -105,8 +98,7 @@ def test_play_en_ru_processes_each_id_in_the_spec(monkeypatch):
 
 def test_play_en_ru_renders_to_mp3_without_live_playback(monkeypatch, tmp_path):
     mock_say = MagicMock()
-    monkeypatch.setattr(play_en_module, "say", mock_say)
-    monkeypatch.setattr(play_ru_module, "say", mock_say)
+    monkeypatch.setattr(play_lang_module, "say", mock_say)
     monkeypatch.setattr(play_en_ru_module, "render_en", lambda id_, clause: b"EN")
     monkeypatch.setattr(play_en_ru_module, "render_ru", lambda id_, clause: b"RU")
     mock_run = MagicMock()
