@@ -40,8 +40,10 @@ LANGUAGES.update(
             model_config=HOME / ".local/share/piper-voices/en/en_US/amy/medium/en_US-amy-medium.onnx.json",
         ),
         "ru": VoiceSpec(
-            model=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx",
-            model_config=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx.json",
+            # model=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx",
+            # model_config=HOME / ".local/share/piper-voices/ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx.json",
+            model=HOME / ".local/share/piper-voices/ru/ru_RU/denis/medium/ru_RU-denis-medium.onnx",
+            model_config=HOME / ".local/share/piper-voices/ru/ru_RU/denis/medium/ru_RU-denis-medium.onnx.json",
         ),
     }
 )
