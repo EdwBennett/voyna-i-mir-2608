@@ -58,7 +58,7 @@ def test_builds_audio_and_invokes_ffmpeg(monkeypatch):
     assert mock_run.call_args.kwargs["check"] is True
 
 
-def test_uses_denis_voice(monkeypatch):
+def test_defaults_to_denis_voice(monkeypatch):
     calls = []
     monkeypatch.setattr(
         make_ru_mp3_module,
@@ -70,6 +70,20 @@ def test_uses_denis_voice(monkeypatch):
     make_ru_mp3_module.make_ru_mp3("1", "out.mp3")
 
     assert calls == ["denis"]
+
+
+def test_passes_voice_through_to_render_ru(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        make_ru_mp3_module,
+        "render_ru",
+        lambda id_, voice=None: calls.append(voice) or b"RU",
+    )
+    monkeypatch.setattr(make_ru_mp3_module.subprocess, "run", MagicMock())
+
+    make_ru_mp3_module.make_ru_mp3("1", "out.mp3", voice="irina")
+
+    assert calls == ["irina"]
 
 
 def test_defaults_to_all_sentences_in_dataset(monkeypatch):
@@ -101,3 +115,10 @@ def test_cli_rejects_non_mp3_output():
 
     assert result.returncode == 1
     assert "must end with .mp3" in result.stderr
+
+
+def test_cli_rejects_invalid_voice():
+    result = run_cli(["1", "-o", "out.mp3", "--voice", "bogus"])
+
+    assert result.returncode == 2
+    assert "invalid choice" in result.stderr
