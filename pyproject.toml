@@ -7,7 +7,7 @@ requires-python = ">=3.14"
 dependencies = []
 
 [project.scripts]
-voyna-i-mir-2608 = "voyna_i_mir_2608.cli:main"
+voyna-i-mir-2608 = "voyna_i_mir_2608.play.play_en_ru:main"
 
 [build-system]
 requires = ["hatchling"]

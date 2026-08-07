@@ -92,7 +92,10 @@ def _render_to_mp3(
     subprocess.run(ffmpeg_cmd, input=audio, check=True)
 
 
-if __name__ == "__main__":
+def main(argv: Optional[list[str]] = None) -> int:
+    """Parse CLI args and run `play_en_ru`. Entry point for the console script
+    and for `python -m voyna_i_mir_2608` / `python -m voyna_i_mir_2608.play.play_en_ru`.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(
@@ -126,7 +129,7 @@ if __name__ == "__main__":
         help="Wait for the space bar instead of the delay between English and Russian audio; "
              "press 'r' after Russian to replay it",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     play_en_ru(
         args.id,
@@ -137,3 +140,8 @@ if __name__ == "__main__":
         interactive=args.interactive,
         ru_voice=args.ru_voice,
     )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
