@@ -4,7 +4,7 @@ Bilingual Russian/English sentence-pair audio drills: play, print, or render
 to mp3 an English sentence followed by its Russian translation, with a pause
 (or interactive space-bar advance) in between.
 
-## Install
+## Install (sudo dnf install uv)
 
 ```bash
 uv tool install git+https://github.com/EdwBennett/voyna-i-mir-2608.git
